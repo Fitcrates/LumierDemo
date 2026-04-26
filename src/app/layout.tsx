@@ -1,6 +1,21 @@
 import type { Metadata } from "next";
+import { DM_Sans, Prata } from "next/font/google";
 import "./globals.css";
 import ClientWrapper from "@/components/ClientWrapper";
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
+
+const prata = Prata({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-cormorant",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "LUMIÈRE | Luxury Interior Design",
@@ -24,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${dmSans.variable} ${prata.variable}`}>
       <body>
         <ClientWrapper>
           {children}

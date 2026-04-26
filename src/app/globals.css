@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400&family=Prata&display=swap');
-
 :root {
   --void: #080709;
   --ink: #141210;
@@ -9,9 +7,6 @@
   --gold-dim: #7A5820;
   --text-on-dark: #E8E4DC;
   --text-muted: #6B6760;
-
-  --font-cormorant: 'Prata', serif;
-  --font-dm-sans: 'DM Sans', sans-serif;
 }
 
 * {

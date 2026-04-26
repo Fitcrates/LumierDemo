@@ -2,6 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 export default function Nav() {
   const navRef = useRef<HTMLElement>(null);
@@ -23,21 +28,32 @@ export default function Nav() {
       });
     }
 
-    const handleScroll = () => {
+    // Theme detection with ScrollTrigger to avoid layout thrashing
+    const sections = document.querySelectorAll('[data-nav-theme]');
+    const triggers: ScrollTrigger[] = [];
+    
+    sections.forEach(sec => {
+      const trigger = ScrollTrigger.create({
+        trigger: sec,
+        start: "top 100px",
+        end: "bottom 100px",
+        onEnter: () => setTheme(sec.getAttribute('data-nav-theme') as "dark" | "light"),
+        onEnterBack: () => setTheme(sec.getAttribute('data-nav-theme') as "dark" | "light"),
+      });
+      triggers.push(trigger);
+    });
+
+    const scrollListener = () => {
       const scrollY = window.scrollY;
-      
-      // Show nav after passing 80% of viewport height
       const shouldBeVisible = scrollY > window.innerHeight * 0.8;
-            if (shouldBeVisible !== visibleRef.current) {
+      
+      if (shouldBeVisible !== visibleRef.current) {
         visibleRef.current = shouldBeVisible;
         setVisible(shouldBeVisible);
 
-        // Animate the bg morph with GSAP (sole authority for shape)
         if (bgRef.current) {
           const isMobile = window.innerWidth <= 768;
-
           if (shouldBeVisible) {
-            // Morph to full-width rectangle
             gsap.to(bgRef.current, {
               width: "100vw",
               height: isMobile ? (window.innerWidth <= 480 ? 60 : 70) : 90,
@@ -47,10 +63,9 @@ export default function Nav() {
               clipPath: "none",
               duration: 0.7,
               ease: "power4.inOut",
-              overwrite: true, // Kill any running tween on this target automatically
+              overwrite: true,
             });
           } else {
-            // Morph back to corner circle
             gsap.to(bgRef.current, {
               width: 80,
               height: 80,
@@ -65,24 +80,14 @@ export default function Nav() {
           }
         }
       }
-
-
-      // Theme detection based on current section
-      const sections = document.querySelectorAll('[data-nav-theme]');
-      let currentTheme: "dark" | "light" = "dark";
-      
-      sections.forEach(sec => {
-        const rect = sec.getBoundingClientRect();
-        if (rect.top <= 100 && rect.bottom >= 100) {
-          currentTheme = sec.getAttribute('data-nav-theme') as "dark" | "light";
-        }
-      });
-      
-      setTheme(currentTheme);
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", scrollListener, { passive: true });
+    
+    return () => {
+      window.removeEventListener("scroll", scrollListener);
+      triggers.forEach(t => t.kill());
+    };
   }, []);
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, target: string) => {

@@ -6,7 +6,9 @@ import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import SplitType from "split-type";
 import ThreeScene from "@/components/ThreeScene";
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 export default function Hero() {
   const heroTransitionRef = useRef<HTMLDivElement>(null);
