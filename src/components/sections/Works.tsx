@@ -268,7 +268,7 @@ export default function Works() {
 
       <div className="project project-1" data-nav-theme="dark">
         <div className="project-img-wrapper">
-          <Image src="/images/NoirWorks.webp" alt="Villa Noir Interior Architecture" className="project-img-inner" width={1600} height={1200} sizes="(max-width: 768px) 100vw, 50vw" unoptimized />
+          <Image src="/images/noirWorks.webp" alt="Villa Noir Interior Architecture" className="project-img-inner" width={1600} height={1200} sizes="(max-width: 768px) 100vw, 50vw" unoptimized />
         </div>
         <div className="project-text">
           <div className="project-year">24</div>
