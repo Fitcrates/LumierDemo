@@ -65,11 +65,10 @@ type GLTFResult = GLTF & {
     M_BulbHolder: THREE.MeshStandardMaterial
     M_BulbFilament: THREE.MeshStandardMaterial
   }
-  animations: GLTFAction[]
 }
 
-export function Model(props: JSX.IntrinsicElements['group']) {
-  const { nodes, materials } = useGLTF('/bulbs.glb') as GLTFResult
+export function Model(props: React.JSX.IntrinsicElements['group']) {
+  const { nodes, materials } = useGLTF('/model/bulbs.glb') as unknown as GLTFResult
   return (
     <group {...props} dispose={null}>
       <group scale={0.01}>
@@ -153,4 +152,4 @@ export function Model(props: JSX.IntrinsicElements['group']) {
   )
 }
 
-useGLTF.preload('/bulbs.glb')
+useGLTF.preload('/model/bulbs.glb')
