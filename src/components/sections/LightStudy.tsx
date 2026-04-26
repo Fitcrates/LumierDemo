@@ -12,15 +12,27 @@ export default function LightStudy() {
     const mousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     const currentPos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
+    let hasMoved = false;
+
     const handleMouseMove = (e: MouseEvent) => {
       mousePos.x = e.clientX;
       mousePos.y = e.clientY;
+      if (!hasMoved) {
+        currentPos.x = e.clientX;
+        currentPos.y = e.clientY;
+        hasMoved = true;
+      }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length > 0) {
         mousePos.x = e.touches[0].clientX;
         mousePos.y = e.touches[0].clientY;
+        if (!hasMoved) {
+          currentPos.x = mousePos.x;
+          currentPos.y = mousePos.y;
+          hasMoved = true;
+        }
       }
     };
 
@@ -77,6 +89,7 @@ export default function LightStudy() {
         fill
         sizes="100vw"
         style={{ objectFit: "cover" }}
+        priority
       />
 
       {/* Light version revealed by clipPath */}
@@ -97,6 +110,7 @@ export default function LightStudy() {
           fill
           sizes="100vw"
           style={{ objectFit: "cover", pointerEvents: "none" }}
+          priority
         />
       </div>
     </section>

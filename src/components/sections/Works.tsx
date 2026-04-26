@@ -268,7 +268,7 @@ export default function Works() {
 
       <div className="project project-1" data-nav-theme="dark">
         <div className="project-img-wrapper">
-          <Image src="/images/NoirWorks.webp" alt="Villa Noir Interior Architecture" className="project-img-inner" width={1600} height={1200} sizes="(max-width: 768px) 100vw, 50vw" />
+          <Image src="/images/NoirWorks.webp" alt="Villa Noir Interior Architecture" className="project-img-inner" width={1600} height={1200} sizes="(max-width: 768px) 100vw, 50vw" unoptimized />
         </div>
         <div className="project-text">
           <div className="project-year">24</div>
@@ -279,7 +279,7 @@ export default function Works() {
 
       <div className="project project-2" data-nav-theme="light">
         <div className="project-img-wrapper">
-          <Image src="/images/ParisAtelier.webp" alt="L'Atelier The Glasshouse Interior" className="project-img-inner" width={1600} height={1200} sizes="(max-width: 768px) 100vw, 100vw" />
+          <Image src="/images/ParisAtelier.webp" alt="L'Atelier The Glasshouse Interior" className="project-img-inner" width={1600} height={1200} sizes="(max-width: 768px) 100vw, 100vw" unoptimized />
           <div className="project-overlay"></div>
         </div>
         <div className="project-text">
@@ -290,7 +290,7 @@ export default function Works() {
 
       <div className="project project-3" data-nav-theme="light">
         <div className="project-img-wrapper">
-          <Image src="/images/AlpineWorks.webp" alt="Alpine Retreat Living Room" className="project-img-inner" width={1600} height={1200} sizes="(max-width: 768px) 100vw, 50vw" />
+          <Image src="/images/AlpineWorks.webp" alt="Alpine Retreat Living Room" className="project-img-inner" width={1600} height={1200} sizes="(max-width: 768px) 100vw, 50vw" unoptimized />
         </div>
         <div className="project-text">
           <div className="project-year">23</div>

@@ -211,15 +211,21 @@ export default function Services() {
             boxShadow: "0 20px 40px rgba(0,0,0,0.5)" // Dodaje kinowej głębi
           }}
         >
-          {activeImg && (
+          {servicesData.map((s) => (
             <Image
-              src={activeImg}
-              alt="Service preview"
+              key={s.image}
+              src={s.image}
+              alt={s.title}
               fill
               sizes="33vw"
-              style={{ objectFit: "cover" }}
+              style={{ 
+                objectFit: "cover",
+                opacity: activeImg === s.image ? 1 : 0,
+                transition: "opacity 0.3s ease",
+              }}
+              priority
             />
-          )}
+          ))}
         </div>
       )}
     </section>
