@@ -194,7 +194,7 @@ export default function ThreeScene() {
     <Canvas camera={{ fov: 42, position: [0, 0, 10] }} gl={{ antialias: true, alpha: true }}>
       <color attach="background" args={['#080709']} />
       <Scene />
-      <EffectComposer multisampling={0}>
+      <EffectComposer>
         <Bloom luminanceThreshold={0.4} luminanceSmoothing={0.3} mipmapBlur intensity={2.8} radius={0.85} />
         <Noise opacity={0.04} />
         <Vignette offset={0.3} darkness={0.85} />

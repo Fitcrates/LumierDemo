@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  reactStrictMode: false,
   // Wymuszenie agresywniejszej kompresji obrazków (AVIF jest lżejszy i lepszy jakościowo od WebP)
   images: {
     formats: ['image/avif', 'image/webp'],
