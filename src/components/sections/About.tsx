@@ -26,7 +26,9 @@ export default function About() {
           scrub: true,
         },
         y: "-60px",
-        ease: "none"
+        ease: "none",
+        force3D: true,
+        willChange: "transform"
       });
 
       gsap.to(".about-text-container", {

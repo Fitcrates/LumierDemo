@@ -6,98 +6,114 @@ import Image from "next/image";
 export default function LightStudy() {
   const revealRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLElement>(null);
+  const rafIdRef = useRef<number>(0);
+  const isVisibleRef = useRef(true);
+  const mousePosRef = useRef({ x: 0, y: 0 });
+  const currentPosRef = useRef({ x: 0, y: 0 });
+  const containerRectRef = useRef({ left: 0, top: 0, width: 0, height: 0 });
+  const isMobileRef = useRef(false);
+  const lerpFactorRef = useRef(0.28);
+  const radiusRef = useRef(150);
+  const isInitializedRef = useRef(false);
+
+  // Update dimensions and mobile state
+  const updateDimensions = () => {
+    isMobileRef.current = window.innerWidth < 768;
+    lerpFactorRef.current = isMobileRef.current ? 0.35 : 0.28;
+    radiusRef.current = isMobileRef.current ? 75 : 150;
+    
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      containerRectRef.current = { 
+        left: rect.left, 
+        top: rect.top, 
+        width: rect.width, 
+        height: rect.height 
+      };
+    }
+  };
 
   useEffect(() => {
-    // Start with the mouse in the center of the screen
-    const mousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    const currentPos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    // Initialize mouse position in center
+    mousePosRef.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    currentPosRef.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
-    // Cache container dimensions - recalculate on scroll for accuracy
-    let containerRect = { left: 0, top: 0, width: 0, height: 0 };
-    let isInViewport = true;
+    // Initial dimension calculation
+    updateDimensions();
+    isInitializedRef.current = true;
 
-    const updateContainerRect = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        containerRect = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
-        isInViewport = rect.top <= window.innerHeight && rect.bottom >= 0;
-      }
-    };
+    // FIXED: Use IntersectionObserver to pause animation when off-screen
+    // This is the key fix - stop the RAF loop when section is not visible
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisibleRef.current = entry.isIntersecting;
+      },
+      { threshold: 0 }
+    );
 
-    // Initial rect calculation
-    updateContainerRect();
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
 
-    // Update rect on scroll (throttled) - needed because container moves during scroll
-    let scrollTimeout: number;
-    const handleScroll = () => {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = window.setTimeout(updateContainerRect, 50);
-    };
-
-    // Update rect on resize
-    let resizeTimeout: number;
-    const handleResize = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = window.setTimeout(updateContainerRect, 100);
-    };
-
-    // Use pointermove for both mouse and touch - more efficient
+    // Pointer move handler
     const handlePointerMove = (e: PointerEvent | TouchEvent) => {
       const clientX = 'touches' in e ? e.touches[0].clientX : (e as PointerEvent).clientX;
       const clientY = 'touches' in e ? e.touches[0].clientY : (e as PointerEvent).clientY;
-      
-      mousePos.x = clientX;
-      mousePos.y = clientY;
+      mousePosRef.current = { x: clientX, y: clientY };
     };
 
-    // Listen on window to track cursor globally
+    // FIXED: Use passive scroll listener with proper throttling
+    let scrollRAF: number = 0;
+    const handleScroll = () => {
+      if (scrollRAF) return;
+      scrollRAF = requestAnimationFrame(() => {
+        updateDimensions();
+        scrollRAF = 0;
+      });
+    };
+
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("touchmove", handlePointerMove, { passive: true });
     window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleResize);
 
-    // Higher lerp value = faster response, less lag
-    // Mobile: even higher for better responsiveness on touch
-    // Use window directly - isMobile state is for re-renders only
-    const getLerpFactor = () => window.innerWidth < 768 ? 0.35 : 0.28;
-    const getRadius = () => window.innerWidth < 768 ? 75 : 150;
-
-    let rafId: number;
+    // FIXED: RAF loop now checks isVisibleRef before animating
     let lastTime = 0;
     const frameInterval = 16;
 
     const update = (time: number) => {
-      if (time - lastTime >= frameInterval) {
-        lastTime = time;
+      // Only animate when visible - this is the key optimization
+      if (isVisibleRef.current && isInitializedRef.current) {
+        if (time - lastTime >= frameInterval) {
+          lastTime = time;
 
-        if (revealRef.current && isInViewport) {
-          const lerpFactor = getLerpFactor();
-          const radius = getRadius();
-          
-          // Lerp with higher factor for snappier response
-          currentPos.x += (mousePos.x - currentPos.x) * lerpFactor;
-          currentPos.y += (mousePos.y - currentPos.y) * lerpFactor;
+          if (revealRef.current) {
+            const lerpFactor = lerpFactorRef.current;
+            const radius = radiusRef.current;
+            
+            // Lerp calculation
+            currentPosRef.current.x += (mousePosRef.current.x - currentPosRef.current.x) * lerpFactor;
+            currentPosRef.current.y += (mousePosRef.current.y - currentPosRef.current.y) * lerpFactor;
 
-          // Calculate position relative to cached container rect
-          const x = currentPos.x - containerRect.left;
-          const y = currentPos.y - containerRect.top;
+            // Calculate position relative to container
+            const x = currentPosRef.current.x - containerRectRef.current.left;
+            const y = currentPosRef.current.y - containerRectRef.current.top;
 
-          revealRef.current.style.clipPath = `circle(${radius}px at ${x}px ${y}px)`;
+            revealRef.current.style.clipPath = `circle(${radius}px at ${x}px ${y}px)`;
+          }
         }
       }
-      rafId = requestAnimationFrame(update);
+      rafIdRef.current = requestAnimationFrame(update);
     };
 
-    rafId = requestAnimationFrame(update);
+    rafIdRef.current = requestAnimationFrame(update);
 
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("touchmove", handlePointerMove);
       window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleResize);
-      clearTimeout(scrollTimeout);
-      clearTimeout(resizeTimeout);
-      cancelAnimationFrame(rafId);
+      if (scrollRAF) cancelAnimationFrame(scrollRAF);
+      cancelAnimationFrame(rafIdRef.current);
+      observer.disconnect();
     };
   }, []);
 

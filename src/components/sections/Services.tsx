@@ -40,36 +40,31 @@ export default function Services() {
   const quickYRef = useRef<gsap.QuickToFunc | null>(null);
   const [activeImg, setActiveImg] = useState("");
   const [isMobile, setIsMobile] = useState(false);
-  const mousePos = useRef({ x: 0, y: 0 });
+  const isSectionVisibleRef = useRef(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
 
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      mousePos.current = { x: e.clientX, y: e.clientY };
-    };
-    window.addEventListener("mousemove", handleGlobalMouseMove);
+    // FIXED: Use IntersectionObserver instead of global scroll listener
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isSectionVisibleRef.current = entry.isIntersecting;
+        // Hide hover image when leaving section
+        if (!entry.isIntersecting && hoverImgContainerRef.current) {
+          gsap.set(hoverImgContainerRef.current, { opacity: 0, scale: 0.85 });
+        }
+      },
+      { threshold: 0 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
 
     // Inicjalizacja quickTo dla płynnego śledzenia kursora (reużywalny tween)
     if (hoverImgContainerRef.current) {
       quickXRef.current = gsap.quickTo(hoverImgContainerRef.current, "x", { duration: 0.7, ease: "power3.out" });
       quickYRef.current = gsap.quickTo(hoverImgContainerRef.current, "y", { duration: 0.7, ease: "power3.out" });
     }
-
-    // Zabezpieczenie przed "wiszącym" obrazkiem podczas szybkiego scrolla
-    const handleScroll = () => {
-      if (!sectionRef.current || !hoverImgContainerRef.current) return;
-      const rect = sectionRef.current.getBoundingClientRect();
-      const { y } = mousePos.current;
-      
-      // Jeśli kursor znalazł się poza sekcją na skutek scrolla, ukrywamy hover.
-      if (y < rect.top || y > rect.bottom) {
-        gsap.to(hoverImgContainerRef.current, { opacity: 0, scale: 0.85, duration: 0.3, ease: "power2.out" });
-      }
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
 
     const mm = gsap.matchMedia();
 
@@ -99,9 +94,8 @@ export default function Services() {
 
     return () => {
       mm.revert();
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("mousemove", handleGlobalMouseMove);
       window.removeEventListener("resize", checkMobile);
+      observer.disconnect();
     };
   }, []);
 

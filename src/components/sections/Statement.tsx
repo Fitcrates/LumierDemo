@@ -40,6 +40,7 @@ export default function Statement() {
               filter: "blur(0px)",
               color: "var(--ink)",
               stagger: 0.1,
+              force3D: true,
             });
           }
         }

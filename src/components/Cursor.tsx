@@ -64,15 +64,25 @@ export default function Cursor() {
 
     window.addEventListener("mousemove", onMouseMove);
 
-    // Render loop for ring lerp - use direct DOM, not gsap.set()
+    // FIXED: Render loop for ring lerp - use direct DOM with visibility check
     let rafId: number;
-    const render = () => {
-      ringX += (mouseX - ringX) * 0.08;
-      ringY += (mouseY - ringY) * 0.08;
+    let isWindowFocused = true;
 
-      if (ringElement) {
-        // Direct transform is faster than gsap.set()
-        ringElement.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+    const handleVisibilityChange = () => {
+      isWindowFocused = !document.hidden;
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    const render = () => {
+      // Only animate when window is focused - saves CPU when tab is background
+      if (isWindowFocused) {
+        ringX += (mouseX - ringX) * 0.08;
+        ringY += (mouseY - ringY) * 0.08;
+
+        if (ringElement) {
+          // Direct transform is faster than gsap.set()
+          ringElement.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+        }
       }
 
       rafId = requestAnimationFrame(render);
@@ -83,6 +93,7 @@ export default function Cursor() {
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
       cancelAnimationFrame(rafId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 

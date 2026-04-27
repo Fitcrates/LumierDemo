@@ -75,7 +75,7 @@ export default function Contact() {
         </defs>
       </svg>
 
-      <div className="contact-title-container" style={{ filter: "url(#sand-storm)", willChange: "filter" }}>
+      <div className="contact-title-container" style={{ filter: "url(#sand-storm)" }}>
         <div className="contact-title-1">Let's work</div>
         <div className="contact-title-2">together.</div>
       </div>

@@ -11,8 +11,10 @@ import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 function Scene({ isMobile }: { isMobile: boolean }) {
-  const { nodes, materials, scene } = useGLTF("/model/bulbs.glb");
-  const envMap = useTexture("/images/hero-bg-industrial.webp");
+  const { scene } = useGLTF("/model/bulbs.glb");
+  // Use heroDesktop.webp for desktop, hero-bg-industrial.webp for mobile
+  const bgImage = isMobile ? "/images/hero-bg-industrial.webp" : "/images/heroDesktop.webp";
+  const envMap = useTexture(bgImage);
   // Ustawiamy teksturę jako mapę środowiskową (do odbić na szkle)
   envMap.mapping = THREE.EquirectangularReflectionMapping;
 
@@ -175,7 +177,7 @@ function Scene({ isMobile }: { isMobile: boolean }) {
         =========================================================
       */}
       <group position={[0, 0, -25]}>
-        <DreiImage url="/images/hero-bg-industrial.webp" scale={[bgWidth, bgHeight]} transparent={false} />
+        <DreiImage url={bgImage} scale={[bgWidth, bgHeight]} transparent={false} />
         {/* Warstwa przyciemniająca tło */}
         <mesh position={[0, 0, 0.1]}>
           <planeGeometry args={[bgWidth, bgHeight]} />
