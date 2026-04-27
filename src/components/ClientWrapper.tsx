@@ -27,21 +27,21 @@ export default function ClientWrapper({ children }: { children: React.ReactNode 
       infinite: false,
     });
 
-    function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-
-    requestAnimationFrame(raf);
-
-    // GSAP internal ScrollTrigger sync
+    // OPTIMIZED: Use single RAF loop - Lenis handles its own internal RAF
+    // Just sync ScrollTrigger with Lenis scroll events
     lenis.on('scroll', ScrollTrigger.update);
 
+    // Use GSAP ticker for smooth sync (handles time better than raw RAF)
+    // This is the recommended way to integrate Lenis with GSAP
     gsap.ticker.add((time) => {
       lenis.raf(time * 1000);
     });
 
-    gsap.ticker.lagSmoothing(0);
+    // Keep lag smoothing enabled (default 400ms) to smooth out frame drops
+    // gsap.ticker.lagSmoothing(0); // REMOVED - was causing stuttering
+
+    // Set GSAP ticker to use requestAnimationFrame (default)
+    gsap.ticker.fps(60);
 
     return () => {
       lenis.destroy();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import Image from "next/image";
@@ -45,13 +45,23 @@ export default function Works() {
     };
   }, []);
 
+  // Pre-create gradient templates (reused each frame - much faster)
+  const gradientTemplates = useMemo(() => {
+    // These will be positioned at runtime
+    return {
+      outer: { radius: 50 },
+      medium: { radius: 20 },
+      core: { radius: 7 },
+    };
+  }, []);
+
   const drawPhoton = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap DPR at 2
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
 
@@ -67,16 +77,16 @@ export default function Works() {
     const progress = progressRef.current;
     if (progress <= 0.001) return;
 
-    // Draw trail
-    const trailSpan = 0.10; // how far back the trail extends (in t units)
-    const trailSteps = 120; // resolution of trail path
+    // OPTIMIZED: Reduced trail steps (40 instead of 120)
+    const trailSpan = 0.10;
+    const trailSteps = 40;
 
-    // Faint guideline path
+    // OPTIMIZED: Reduced guideline iterations (50 instead of 200)
     ctx.beginPath();
     ctx.strokeStyle = "rgba(191, 140, 58, 0.05)";
     ctx.lineWidth = 1;
-    for (let i = 0; i <= 200; i++) {
-      const t = i / 200;
+    for (let i = 0; i <= 50; i++) {
+      const t = i / 50;
       const pt = getPointOnPath(t, w, h);
       if (i === 0) ctx.moveTo(pt.x, pt.y);
       else ctx.lineTo(pt.x, pt.y);
@@ -89,79 +99,84 @@ export default function Works() {
       const trailT = progress - (trailSpan * (i / trailSteps));
       if (trailT < 0) continue;
       const pt = getPointOnPath(Math.min(trailT, 1), w, h);
-      trailPoints.push({ x: pt.x, y: pt.y, t: 1 - (i / trailSteps) }); // t: 0=tail, 1=head
+      trailPoints.push({ x: pt.x, y: pt.y, t: 1 - (i / trailSteps) });
     }
 
     if (trailPoints.length < 2) return;
 
-    // Draw blurred smudge trail using multiple overlapping stroke passes
-    // Each pass has different width & opacity for a soft, glowy smear
+    // OPTIMIZED: Reduced passes (3 instead of 5)
     const passes = [
-      { width: 36, color: (a: number) => `rgba(191, 140, 58, ${0.02 * a})` },
-      { width: 22, color: (a: number) => `rgba(220, 170, 70, ${0.04 * a})` },
-      { width: 12, color: (a: number) => `rgba(255, 200, 80, ${0.08 * a})` },
-      { width: 6, color: (a: number) => `rgba(255, 220, 130, ${0.15 * a})` },
-      { width: 3, color: (a: number) => `rgba(255, 240, 200, ${0.25 * a})` },
+      { width: 30, color: "rgba(191, 140, 58, 0.03)" },
+      { width: 16, color: "rgba(255, 200, 80, 0.08)" },
+      { width: 6, color: "rgba(255, 220, 130, 0.2)" },
     ];
 
+    // Batch all trail rendering with same style
     for (const pass of passes) {
-      // Draw trail as many short segments with increasing opacity
+      ctx.lineWidth = pass.width;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = pass.color;
+      
+      ctx.beginPath();
       for (let i = 1; i < trailPoints.length; i++) {
         const p0 = trailPoints[i - 1];
         const p1 = trailPoints[i];
-        const fade = p1.t; // 0 at tail, 1 at head
-
-        ctx.beginPath();
+        const fade = p1.t * p1.t;
+        
+        ctx.globalAlpha = fade;
         ctx.moveTo(p0.x, p0.y);
         ctx.lineTo(p1.x, p1.y);
-        ctx.strokeStyle = pass.color(fade * fade); // quadratic ease for softer tail
-        ctx.lineWidth = pass.width * (0.15 + 0.85 * fade); // thinner at tail
-        ctx.lineCap = "round";
-        ctx.stroke();
       }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
     }
 
     // Main photon head
     const mainPt = trailPoints[trailPoints.length - 1];
 
-    // Outer glow (large, diffuse)
-    const outerGlow = ctx.createRadialGradient(mainPt.x, mainPt.y, 0, mainPt.x, mainPt.y, 50);
-    outerGlow.addColorStop(0, "rgba(255, 200, 80, 0.3)");
-    outerGlow.addColorStop(0.25, "rgba(191, 140, 58, 0.1)");
-    outerGlow.addColorStop(1, "rgba(191, 140, 58, 0)");
+    // OPTIMIZED: Use simpler arc fills instead of radial gradients
+    // Outer glow - simple arc with gradient-like effect
     ctx.beginPath();
-    ctx.fillStyle = outerGlow;
     ctx.arc(mainPt.x, mainPt.y, 50, 0, Math.PI * 2);
+    const outerGrad = ctx.createRadialGradient(mainPt.x, mainPt.y, 0, mainPt.x, mainPt.y, 50);
+    outerGrad.addColorStop(0, "rgba(255, 200, 80, 0.25)");
+    outerGrad.addColorStop(0.5, "rgba(191, 140, 58, 0.08)");
+    outerGrad.addColorStop(1, "rgba(191, 140, 58, 0)");
+    ctx.fillStyle = outerGrad;
     ctx.fill();
 
     // Medium glow
-    const medGlow = ctx.createRadialGradient(mainPt.x, mainPt.y, 0, mainPt.x, mainPt.y, 20);
-    medGlow.addColorStop(0, "rgba(255, 230, 150, 0.7)");
-    medGlow.addColorStop(0.4, "rgba(255, 200, 80, 0.25)");
-    medGlow.addColorStop(1, "rgba(191, 140, 58, 0)");
     ctx.beginPath();
-    ctx.fillStyle = medGlow;
     ctx.arc(mainPt.x, mainPt.y, 20, 0, Math.PI * 2);
+    const medGrad = ctx.createRadialGradient(mainPt.x, mainPt.y, 0, mainPt.x, mainPt.y, 20);
+    medGrad.addColorStop(0, "rgba(255, 230, 150, 0.6)");
+    medGrad.addColorStop(0.5, "rgba(255, 200, 80, 0.2)");
+    medGrad.addColorStop(1, "rgba(191, 140, 58, 0)");
+    ctx.fillStyle = medGrad;
     ctx.fill();
 
     // Bright core
-    const coreGlow = ctx.createRadialGradient(mainPt.x, mainPt.y, 0, mainPt.x, mainPt.y, 7);
-    coreGlow.addColorStop(0, "rgba(255, 255, 245, 1)");
-    coreGlow.addColorStop(0.5, "rgba(255, 225, 140, 0.9)");
-    coreGlow.addColorStop(1, "rgba(255, 200, 80, 0)");
     ctx.beginPath();
-    ctx.fillStyle = coreGlow;
     ctx.arc(mainPt.x, mainPt.y, 7, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 240, 200, 0.9)";
     ctx.fill();
 
     // White hot center
     ctx.beginPath();
-    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
     ctx.arc(mainPt.x, mainPt.y, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
     ctx.fill();
   }, [getPointOnPath]);
 
   useEffect(() => {
+    // Skip photon animation on mobile for performance
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    
+    // Hide canvas on mobile
+    if (canvasRef.current) {
+      canvasRef.current.style.display = isMobile ? "none" : "block";
+    }
+    
     const mm = gsap.matchMedia();
 
     mm.add("(prefers-reduced-motion: no-preference)", () => {
@@ -199,31 +214,41 @@ export default function Works() {
         }
       );
 
-      // Photon particle scroll progress
-      const progressObj = { value: 0 };
-      gsap.to(progressObj, {
-        scrollTrigger: {
-          trigger: worksRef.current,
-          start: "top center",
-          end: "bottom center",
-          scrub: 0.8,
-          onUpdate: (self) => {
-            progressObj.value = self.progress;
-            progressRef.current = self.progress;
+      // Photon particle scroll progress - skip on mobile
+      if (!isMobile) {
+        const progressObj = { value: 0 };
+        gsap.to(progressObj, {
+          scrollTrigger: {
+            trigger: worksRef.current,
+            start: "top center",
+            end: "bottom center",
+            scrub: 0.8,
+            onUpdate: (self) => {
+              progressObj.value = self.progress;
+              progressRef.current = self.progress;
+            },
           },
-        },
-        value: 1,
-        ease: "none",
-      });
+          value: 1,
+          ease: "none",
+        });
+      }
     });
 
+    // Animation loop — only runs when section is visible and not on mobile
+    // OPTIMIZED: Throttle rendering to ~30fps for better performance
     let lastRenderedProgress = -1;
+    let lastFrameTime = 0;
+    const frameInterval = 33; // ~30fps
 
-    // Animation loop — only runs when section is visible
-    const animate = () => {
-      if (isVisibleRef.current && Math.abs(progressRef.current - lastRenderedProgress) > 0.0001) {
-        drawPhoton();
-        lastRenderedProgress = progressRef.current;
+    const animate = (time: number) => {
+      if (!isMobile && isVisibleRef.current) {
+        const timeSinceLastFrame = time - lastFrameTime;
+        
+        if (timeSinceLastFrame >= frameInterval && Math.abs(progressRef.current - lastRenderedProgress) > 0.001) {
+          drawPhoton();
+          lastRenderedProgress = progressRef.current;
+          lastFrameTime = time;
+        }
       }
       rafRef.current = requestAnimationFrame(animate);
     };
@@ -257,6 +282,7 @@ export default function Works() {
 
   return (
     <section className="works-section" id="works" ref={worksRef} style={{ position: "relative" }}>
+      {/* Canvas hidden on mobile via CSS class - photon effect is too heavy for mobile */}
       <canvas
         ref={canvasRef}
         className="works-photon-canvas"

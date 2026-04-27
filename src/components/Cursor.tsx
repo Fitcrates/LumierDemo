@@ -16,24 +16,29 @@ export default function Cursor() {
     let ringX = mouseX;
     let ringY = mouseY;
 
+    // OPTIMIZED: Use direct DOM manipulation instead of gsap.set() in render loop
+    // This is much faster than gsap.set() at 60fps
+    const ringElement = ringRef.current;
+    const dotElement = dotRef.current;
+    const glowElement = glowRef.current;
+
     const onMouseMove = (e: MouseEvent) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
 
-      if (dotRef.current) {
-        gsap.to(dotRef.current, {
-          x: mouseX,
-          y: mouseY,
-          duration: 0, // instant
-        });
+      // Direct transform for dot - instant follow
+      if (dotElement) {
+        dotElement.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
       }
 
-      if (glowRef.current) {
-        gsap.to(glowRef.current, {
+      // Glow follows with slight delay via GSAP - on every move
+      if (glowElement) {
+        gsap.to(glowElement, {
           x: mouseX,
           y: mouseY,
           duration: 0.6,
           ease: "power2.out",
+          overwrite: "auto"
         });
       }
 
@@ -45,40 +50,39 @@ export default function Cursor() {
         ringRef.current?.classList.remove('hover');
       }
 
-      if (glowRef.current) {
+      // Only trigger GSAP for glow opacity changes (not position in render loop)
+      if (glowElement) {
         const closestSection = target.closest('[data-nav-theme]');
         const isLight = closestSection?.getAttribute('data-nav-theme') === 'light';
-        gsap.to(glowRef.current, {
+        gsap.to(glowElement, {
           opacity: isLight ? 0 : 1,
-          duration: 0.3
+          duration: 0.3,
+          overwrite: "auto"
         });
       }
     };
 
     window.addEventListener("mousemove", onMouseMove);
 
-    // Render loop for lerp
+    // Render loop for ring lerp - use direct DOM, not gsap.set()
+    let rafId: number;
     const render = () => {
       ringX += (mouseX - ringX) * 0.08;
       ringY += (mouseY - ringY) * 0.08;
 
-      if (ringRef.current) {
-        // We only translate here, the hover scale is handled via CSS classes
-        gsap.set(ringRef.current, {
-          left: ringX,
-          top: ringY,
-          xPercent: -50,
-          yPercent: -50
-        });
+      if (ringElement) {
+        // Direct transform is faster than gsap.set()
+        ringElement.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
       }
 
-      requestAnimationFrame(render);
+      rafId = requestAnimationFrame(render);
     };
     
     render();
 
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
+      cancelAnimationFrame(rafId);
     };
   }, []);
 
