@@ -128,6 +128,23 @@ button {
   opacity: 0;
 }
 
+/* SECTION - AWARDS */
+.awards-section {
+  padding: 15vh 8vw;
+  background-color: #0a0a0a;
+  color: #f5f0e8;
+  position: relative;
+  overflow: hidden;
+}
+
+.award-row-content {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr auto;
+  align-items: center;
+  gap: 2rem;
+  padding: 0 1rem;
+}
+
 /* Navigation */
 /* Navigation Background Morph */
 .nav-hamburger-bg {
@@ -270,9 +287,13 @@ button {
   width: 100%;
   height: 2px;
   background-color: var(--ink);
-  transition: transform 0.3s ease, width 0.3s ease, top 0.3s ease;
+  transition: transform 0.3s ease, width 0.3s ease, top 0.3s ease, background-color 0.3s ease;
   position: relative;
   transform-origin: center;
+}
+
+.nav-hamburger.is-scrolled.theme-dark span {
+  background-color: var(--text-on-dark);
 }
 
 .nav-hamburger:not(.is-open):hover span:first-child {
@@ -886,7 +907,7 @@ button {
   height: 100%;
   display: flex;
   align-items: center;
-  padding-left: 15vw;
+  padding-left: 10vw;
   opacity: 0;
   transform: translateX(40px);
 }
@@ -921,8 +942,8 @@ button {
 .process-line-container {
   position: absolute;
   bottom: 20vh;
-  left: 15vw;
-  width: 60%;
+  left: 10vw;
+  width: 80%;
   height: 1px;
   background-color: rgba(255, 255, 255, 0.1);
 }
@@ -959,6 +980,8 @@ button {
   transform: translateX(80px);
   margin-top: -20px;
 }
+
+
 
 .contact-actions {
   margin-top: 4rem;
@@ -1468,6 +1491,10 @@ button {
     right: 5%;
   }
 
+  .works-photon-canvas {
+    display: none;
+  }
+
   /* Project 1 — image on top, text below */
   .project-1 {
     flex-direction: column;
@@ -1568,15 +1595,31 @@ button {
     margin-top: 1.5rem;
   }
 
+  /* ── AWARDS ── */
+  .awards-section {
+    padding: 6vh 1.5rem;
+  }
+
+  .award-row-content {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 0.5rem;
+    padding: 0;
+  }
+  
+  .award-row-content .award-cell:nth-child(1) { grid-column: 1 / -1; }
+  .award-row-content .award-cell:nth-child(2) { grid-column: 1; grid-row: 2; opacity: 0.7; }
+  .award-row-content .award-cell:nth-child(3) { grid-column: 2; grid-row: 2; }
+
   /* ── PROCESS ── */
   .process-step {
-    padding-left: 6vw;
-    padding-right: 6vw;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 
   .process-num {
     font-size: 10rem;
-    right: 3vw;
+    right: 1.5rem;
   }
 
   .process-title {
@@ -1590,8 +1633,8 @@ button {
   }
 
   .process-line-container {
-    left: 6vw;
-    width: calc(100% - 12vw);
+    left: 1.5rem;
+    width: calc(100% - 3rem);
     bottom: 15vh;
   }
 
@@ -1611,6 +1654,31 @@ button {
     font-size: clamp(2.5rem, 10vw, 4.5rem);
     transform: none;
     margin-top: -8px;
+  }
+
+  .contact-modal-content {
+    padding: 2.5rem 1.5rem;
+    width: 95%;
+  }
+
+  .contact-modal-title {
+    font-size: 2.2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .contact-modal-close {
+    top: 1rem;
+    right: 1rem;
+    width: 24px;
+    height: 24px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea,
+  .custom-select-trigger {
+    font-size: 0.9rem;
+    padding: 0.4rem 0;
   }
 
   .contact-email-wrapper {
@@ -1772,14 +1840,20 @@ button {
     font-size: 1.5rem;
   }
 
+  /* ── AWARDS ── */
+  .awards-section {
+    padding: 6vh 1rem;
+  }
+
   /* ── PROCESS ── */
   .process-step {
-    padding-left: 5vw;
-    padding-right: 5vw;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
   .process-num {
     font-size: 7rem;
+    right: 1rem;
   }
 
   .process-title {
@@ -1791,8 +1865,8 @@ button {
   }
 
   .process-line-container {
-    left: 5vw;
-    width: calc(100% - 10vw);
+    left: 1rem;
+    width: calc(100% - 2rem);
     bottom: 12vh;
   }
 
@@ -1805,6 +1879,25 @@ button {
   .contact-title-1,
   .contact-title-2 {
     font-size: clamp(2rem, 12vw, 3.5rem);
+  }
+
+  .contact-modal-content {
+    padding: 1.5rem 1rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .contact-modal-title {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-group {
+    gap: 0.3rem;
+  }
+
+  .form-group label {
+    font-size: 0.55rem;
   }
 
   .contact-email {

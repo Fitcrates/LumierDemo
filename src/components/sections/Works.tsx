@@ -217,10 +217,13 @@ export default function Works() {
       });
     });
 
+    let lastRenderedProgress = -1;
+
     // Animation loop — only runs when section is visible
     const animate = () => {
-      if (isVisibleRef.current) {
+      if (isVisibleRef.current && Math.abs(progressRef.current - lastRenderedProgress) > 0.0001) {
         drawPhoton();
+        lastRenderedProgress = progressRef.current;
       }
       rafRef.current = requestAnimationFrame(animate);
     };

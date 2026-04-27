@@ -10,7 +10,7 @@ import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-function Scene() {
+function Scene({ isMobile }: { isMobile: boolean }) {
   const { nodes, materials, scene } = useGLTF("/model/bulbs.glb");
   const envMap = useTexture("/images/hero-bg-industrial.webp");
   // Ustawiamy teksturę jako mapę środowiskową (do odbić na szkle)
@@ -154,19 +154,20 @@ function Scene() {
 
   return (
     <>
-      <ambientLight color="#ffffff" intensity={0.015} />
+      <ambientLight color="#ffffff" intensity={isMobile ? 0.08 : 0.015} />
       {/* Bardzo delikatne oświetlenie krawędziowe (Rim light), by tylko zarysować kable w ciemności */}
-      <directionalLight position={[0, -10, -5]} color="#ffffff" intensity={0.15} />
-      <directionalLight position={[5, 10, 5]} color="#ffffff" intensity={0.05} />
+      <directionalLight position={[0, -10, -5]} color="#ffffff" intensity={isMobile ? 0.3 : 0.15} />
+      <directionalLight position={[5, 10, 5]} color="#ffffff" intensity={isMobile ? 0.15 : 0.05} />
 
       {/* Dedykowany backlight — oświetla krawędzie szkła od tyłu, tworząc rim highlights */}
-      <directionalLight position={[-3, 2, -8]} color="#FFDDB0" intensity={0.4} />
-      <directionalLight position={[3, -1, -6]} color="#E8D0A8" intensity={0.25} />
+      <directionalLight position={[-3, 2, -8]} color="#FFDDB0" intensity={isMobile ? 0.8 : 0.4} />
+      <directionalLight position={[3, -1, -6]} color="#E8D0A8" intensity={isMobile ? 0.5 : 0.25} />
 
-      <pointLight ref={pointLightRef} position={[0, 0, 0]} color="#FFDDB0" intensity={0.5} distance={30} decay={1.5} />
+      <pointLight ref={pointLightRef} position={[0, 0, 0]} color="#FFDDB0" intensity={isMobile ? 1.5 : 0.5} distance={30} decay={1.5} />
 
       {/* Używamy obrazu tła jako mapy odbić, dzięki czemu szkło odbija nasze dedykowane wnętrze */}
-      <Environment map={envMap} />
+      {/* background={false} - ważne! Bez tego Environment renderuje własne tło (łuna w rogu na mobile) */}
+      <Environment map={envMap} background={false} />
 
       {/* 
         =========================================================
@@ -190,15 +191,30 @@ function Scene() {
 }
 
 export default function ThreeScene() {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+
   return (
-    <Canvas camera={{ fov: 42, position: [0, 0, 10] }} gl={{ antialias: true, alpha: true }}>
+    <Canvas 
+      camera={{ fov: 42, position: [0, 0, 10] }} 
+      gl={{ antialias: !isMobile, alpha: true, powerPreference: "high-performance" }}
+      dpr={[1, isMobile ? 1 : 1.5]}
+    >
       <color attach="background" args={['#080709']} />
-      <Scene />
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.4} luminanceSmoothing={0.3} mipmapBlur intensity={2.8} radius={0.85} />
-        <Noise opacity={0.04} />
-        <Vignette offset={0.3} darkness={0.85} />
-      </EffectComposer>
+      <Scene isMobile={isMobile} />
+      {!isMobile ? (
+        <EffectComposer>
+          <Bloom luminanceThreshold={0.4} luminanceSmoothing={0.3} mipmapBlur intensity={2.8} radius={0.85} />
+          <Noise opacity={0.04} />
+          <Vignette offset={0.3} darkness={0.85} />
+        </EffectComposer>
+      ) : (
+        // Na mobile: mniejszy Bloom (wydajność) + Noise + Vignette żeby nie było tak ciemno
+        <EffectComposer>
+          <Bloom luminanceThreshold={0.6} luminanceSmoothing={0.4} mipmapBlur intensity={1.2} radius={0.7} />
+          <Noise opacity={0.06} />
+          <Vignette offset={0.25} darkness={0.7} />
+        </EffectComposer>
+      )}
     </Canvas>
   );
 }

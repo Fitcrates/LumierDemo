@@ -112,14 +112,8 @@ export default function Awards() {
     <section
       id="awards"
       ref={sectionRef}
+      className="awards-section"
       data-nav-theme="dark"
-      style={{
-        padding: "15vh 8vw",
-        backgroundColor: "#0a0a0a",
-        color: "#f5f0e8",
-        position: "relative",
-        overflow: "hidden",
-      }}
     >
       {/* Ambient glow */}
       <div
@@ -256,15 +250,7 @@ export default function Awards() {
               }}
             />
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1.5fr auto",
-                alignItems: "center",
-                gap: "2rem",
-                padding: "0 1rem",
-              }}
-            >
+            <div className="award-row-content">
               <span
                 className="award-cell"
                 style={{

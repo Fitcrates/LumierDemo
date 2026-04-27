@@ -12,51 +12,75 @@ export default function LightStudy() {
     const mousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     const currentPos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
-    let hasMoved = false;
+    // Cache container dimensions - recalculate on scroll for accuracy
+    let containerRect = { left: 0, top: 0, width: 0, height: 0 };
+    let isInViewport = true;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      mousePos.x = e.clientX;
-      mousePos.y = e.clientY;
-      if (!hasMoved) {
-        currentPos.x = e.clientX;
-        currentPos.y = e.clientY;
-        hasMoved = true;
+    const updateContainerRect = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        containerRect = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+        isInViewport = rect.top <= window.innerHeight && rect.bottom >= 0;
       }
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        mousePos.x = e.touches[0].clientX;
-        mousePos.y = e.touches[0].clientY;
-        if (!hasMoved) {
-          currentPos.x = mousePos.x;
-          currentPos.y = mousePos.y;
-          hasMoved = true;
-        }
-      }
+    // Initial rect calculation
+    updateContainerRect();
+
+    // Update rect on scroll (throttled) - needed because container moves during scroll
+    let scrollTimeout: number;
+    const handleScroll = () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = window.setTimeout(updateContainerRect, 50);
     };
 
-    // Listen on window to track mouse globally even before reaching the section
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    // Update rect on resize
+    let resizeTimeout: number;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(updateContainerRect, 100);
+    };
+
+    // Use pointermove for both mouse and touch - more efficient
+    const handlePointerMove = (e: PointerEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0].clientX : (e as PointerEvent).clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : (e as PointerEvent).clientY;
+      
+      mousePos.x = clientX;
+      mousePos.y = clientY;
+    };
+
+    // Listen on window to track cursor globally
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("touchmove", handlePointerMove, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize);
+
+    // Higher lerp value = faster response, less lag
+    // Mobile: even higher for better responsiveness on touch
+    // Use window directly - isMobile state is for re-renders only
+    const getLerpFactor = () => window.innerWidth < 768 ? 0.35 : 0.28;
+    const getRadius = () => window.innerWidth < 768 ? 75 : 150;
 
     let rafId: number;
+    let lastTime = 0;
+    const frameInterval = 16;
 
-    const update = () => {
-      if (revealRef.current && containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
+    const update = (time: number) => {
+      if (time - lastTime >= frameInterval) {
+        lastTime = time;
 
-        // Only calculate and update if section is within the viewport
-        if (rect.top <= window.innerHeight && rect.bottom >= 0) {
-          // Lerp current position to mouse position for smooth trailing effect
-          currentPos.x += (mousePos.x - currentPos.x) * 0.15;
-          currentPos.y += (mousePos.y - currentPos.y) * 0.15;
+        if (revealRef.current && isInViewport) {
+          const lerpFactor = getLerpFactor();
+          const radius = getRadius();
+          
+          // Lerp with higher factor for snappier response
+          currentPos.x += (mousePos.x - currentPos.x) * lerpFactor;
+          currentPos.y += (mousePos.y - currentPos.y) * lerpFactor;
 
-          // x and y relative to the container
-          const x = currentPos.x - rect.left;
-          const y = currentPos.y - rect.top;
-
-          const radius = window.innerWidth < 768 ? 75 : 150;
+          // Calculate position relative to cached container rect
+          const x = currentPos.x - containerRect.left;
+          const y = currentPos.y - containerRect.top;
 
           revealRef.current.style.clipPath = `circle(${radius}px at ${x}px ${y}px)`;
         }
@@ -67,8 +91,12 @@ export default function LightStudy() {
     rafId = requestAnimationFrame(update);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("touchmove", handlePointerMove);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(scrollTimeout);
+      clearTimeout(resizeTimeout);
       cancelAnimationFrame(rafId);
     };
   }, []);
@@ -100,7 +128,6 @@ export default function LightStudy() {
           position: "absolute",
           inset: 0,
           clipPath: "circle(0px at 50% 50%)",
-          willChange: "clip-path",
           pointerEvents: "none"
         }}
       >

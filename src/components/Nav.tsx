@@ -13,21 +13,41 @@ export default function Nav() {
   const bgRef = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [visible, setVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const visibleRef = useRef(false);
 
   useEffect(() => {
+    const handleResizeState = () => setIsMobile(window.innerWidth <= 768);
+    handleResizeState();
+    window.addEventListener('resize', handleResizeState, { passive: true });
+
     if (bgRef.current) {
+      const mobileCheck = window.innerWidth <= 768;
+      const smallMobileCheck = window.innerWidth <= 480;
+      let circleSize = 80;
+      let circleTop = 2;
+      let circleRight = 18;
+      
+      if (smallMobileCheck) {
+        circleSize = 50;
+        circleTop = 0;
+        circleRight = 3;
+      } else if (mobileCheck) {
+        circleSize = 60;
+        circleTop = 0;
+        circleRight = 4;
+      }
+
       gsap.set(bgRef.current, {
-        width: 80,
-        height: 80,
-        top: 2,
-        right: 18,
+        width: circleSize,
+        height: circleSize,
+        top: circleTop,
+        right: circleRight,
         borderRadius: "50%",
         clipPath: "none",
       });
     }
-
     // Theme detection with ScrollTrigger to avoid layout thrashing
     const sections = document.querySelectorAll('[data-nav-theme]');
     const triggers: ScrollTrigger[] = [];
@@ -43,6 +63,51 @@ export default function Nav() {
       triggers.push(trigger);
     });
 
+    const updateNavBg = (shouldBeVisible: boolean) => {
+      if (!bgRef.current) return;
+      const mobileCheck = window.innerWidth <= 768;
+      const smallMobileCheck = window.innerWidth <= 480;
+      let circleSize = 80;
+      let circleTop = 2;
+      let circleRight = 18;
+      
+      if (smallMobileCheck) {
+        circleSize = 50;
+        circleTop = 0;
+        circleRight = 3;
+      } else if (mobileCheck) {
+        circleSize = 60;
+        circleTop = 0;
+        circleRight = 4;
+      }
+
+      if (shouldBeVisible && !mobileCheck) {
+        gsap.to(bgRef.current, {
+          width: "100vw",
+          height: 90,
+          top: 0,
+          right: 0,
+          borderRadius: "0%",
+          clipPath: "none",
+          duration: 0.7,
+          ease: "power4.inOut",
+          overwrite: true,
+        });
+      } else {
+        gsap.to(bgRef.current, {
+          width: circleSize,
+          height: circleSize,
+          top: circleTop,
+          right: circleRight,
+          borderRadius: "50%",
+          clipPath: "none",
+          duration: 0.7,
+          ease: "power4.inOut",
+          overwrite: true,
+        });
+      }
+    };
+
     const scrollListener = () => {
       const scrollY = window.scrollY;
       const shouldBeVisible = scrollY > window.innerHeight * 0.8;
@@ -50,42 +115,21 @@ export default function Nav() {
       if (shouldBeVisible !== visibleRef.current) {
         visibleRef.current = shouldBeVisible;
         setVisible(shouldBeVisible);
-
-        if (bgRef.current) {
-          const isMobile = window.innerWidth <= 768;
-          if (shouldBeVisible) {
-            gsap.to(bgRef.current, {
-              width: "100vw",
-              height: isMobile ? (window.innerWidth <= 480 ? 60 : 70) : 90,
-              top: 0,
-              right: 0,
-              borderRadius: "0%",
-              clipPath: "none",
-              duration: 0.7,
-              ease: "power4.inOut",
-              overwrite: true,
-            });
-          } else {
-            gsap.to(bgRef.current, {
-              width: 80,
-              height: 80,
-              top: 2,
-              right: 18,
-              borderRadius: "50%",
-              clipPath: "none",
-              duration: 0.7,
-              ease: "power4.inOut",
-              overwrite: true,
-            });
-          }
-        }
+        updateNavBg(shouldBeVisible);
       }
     };
 
+    const resizeListener = () => {
+      updateNavBg(visibleRef.current);
+    };
+
     window.addEventListener("scroll", scrollListener, { passive: true });
+    window.addEventListener("resize", resizeListener, { passive: true });
     
     return () => {
+      window.removeEventListener('resize', handleResizeState);
       window.removeEventListener("scroll", scrollListener);
+      window.removeEventListener("resize", resizeListener);
       triggers.forEach(t => t.kill());
     };
   }, []);
@@ -109,7 +153,7 @@ export default function Nav() {
       <div className={bgClass} ref={bgRef}></div>
 
       <button 
-        className={`nav-hamburger ${visible ? 'hidden' : ''} ${menuOpen ? 'is-open' : ''}`} 
+        className={`nav-hamburger ${visible && !isMobile ? 'hidden' : ''} ${menuOpen ? 'is-open' : ''} theme-${theme} ${visible ? 'is-scrolled' : ''}`} 
         onClick={() => setMenuOpen(!menuOpen)}
         aria-label={menuOpen ? "Close menu" : "Open menu"}
         aria-expanded={menuOpen}
@@ -119,7 +163,7 @@ export default function Nav() {
         <span></span>
       </button>
 
-      <nav ref={navRef} className={`main-nav ${visible ? 'nav-scrolled theme-' + theme : 'nav-top theme-' + theme}`} aria-label="Main Navigation">
+      <nav ref={navRef} className={`main-nav ${visible && !isMobile ? 'nav-scrolled theme-' + theme : 'nav-top theme-' + theme}`} aria-label="Main Navigation">
         <div className="nav-logo" role="banner" aria-label="Lumière Home">LUMIÈRE</div>
         <div className="nav-links">
           <a href="#services" onClick={(e) => handleNavClick(e, '#services')}>Services</a>

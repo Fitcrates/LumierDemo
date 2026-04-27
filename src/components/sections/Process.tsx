@@ -70,26 +70,26 @@ export default function Process() {
       <div className="process-sticky" style={{ display: 'flex', width: '100%' }}>
         <div className="process-left" style={{ width: '50%', position: 'relative', height: '100%' }}>
           <div className="process-steps" ref={stepsRef}>
-            <div className="process-step" style={{ paddingLeft: '10vw' }}>
+            <div className="process-step">
               <div>
                 <h3 className="process-title cormorant-italic">Discovery</h3>
                 <p className="process-desc">We begin by listening. Understanding the narrative of the space, the people who will inhabit it, and the hidden potential within the architecture.</p>
               </div>
             </div>
-            <div className="process-step" style={{ paddingLeft: '10vw' }}>
+            <div className="process-step">
               <div>
                 <h3 className="process-title cormorant-italic">Conception</h3>
                 <p className="process-desc">Drafting the visual language. Selecting materials, shaping the light, and curating art pieces that will define the atmosphere of the interior.</p>
               </div>
             </div>
-            <div className="process-step" style={{ paddingLeft: '10vw' }}>
+            <div className="process-step">
               <div>
                 <h3 className="process-title cormorant-italic">Realisation</h3>
                 <p className="process-desc">Bringing the vision to life through meticulous craftsmanship and precise execution, ensuring every detail aligns perfectly with the initial concept.</p>
               </div>
             </div>
           </div>
-          <div className="process-line-container" style={{ left: '10vw', width: '80%' }}>
+          <div className="process-line-container">
             <div className="process-line-progress"></div>
           </div>
         </div>

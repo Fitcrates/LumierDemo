@@ -173,11 +173,13 @@ export default function Services() {
           {/* Mobilny layout: obrazek pojawia się pod tekstem */}
           {isMobile && (
             <div style={{
+              position: "relative",
               gridColumn: "1 / -1",
-              marginTop: "2rem",
+              marginTop: "1.5rem",
               width: "100%",
-              aspectRatio: "1/1",
-              overflow: "hidden"
+              aspectRatio: "16/9",
+              overflow: "hidden",
+              borderRadius: "4px"
             }}>
               <Image
                 src={service.image}
