@@ -1,0 +1,58 @@
+/* ═══════════════════════════════════════════════════════════
+   BASE - RESET & VARIABLES
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  --void: #080709;
+  --ink: #141210;
+  --parchment: #F4F0E8;
+  --cream: #FAF8F3;
+  --gold: #BF8C3A;
+  --gold-dim: #7A5820;
+  --text-on-dark: #E8E4DC;
+  --text-muted: #6B6760;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto !important;
+}
+
+body {
+  font-family: var(--font-dm-sans);
+  font-size: 15px;
+  line-height: 1.9;
+  font-weight: 300;
+  background-color: var(--void);
+  color: var(--text-on-dark);
+  overflow-x: hidden;
+  cursor: none;
+  overscroll-behavior: none;
+}
+
+a,
+button {
+  cursor: none;
+  text-decoration: none;
+  color: inherit;
+  background: none;
+  border: none;
+}
+
+/* Grain Overlay */
+.grain-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9997;
+  opacity: 0.042;
+  mix-blend-mode: overlay;
+}

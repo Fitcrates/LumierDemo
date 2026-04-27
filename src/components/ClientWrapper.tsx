@@ -18,34 +18,40 @@ export default function ClientWrapper({ children }: { children: React.ReactNode 
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
-    // Initialize Lenis - try with wheel-friendly settings
-    // KEY: The issue is likely with wheel event handling
+    // FIXED: Detect mobile for optimized settings
+    const isMobile = window.innerWidth < 768;
+    
+    // Initialize Lenis with mobile-optimized settings
     const lenis = new Lenis({
-      duration: 0.8, // Faster for more responsive wheel feel
+      duration: isMobile ? 0.8 : 1.0, // Slower on mobile = smoother
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
-      smoothWheel: true, // Enable smooth wheel - but with proper settings
+      smoothWheel: !isMobile, // Disable smooth wheel on mobile - native is better
       wheelMultiplier: 1,
       infinite: false,
-      touchMultiplier: 2,
-      // Use native wheel smoothing - this is key for wheel jank
-      lerp: 0.05, // Very low lerp = more responsive to wheel
+      touchMultiplier: isMobile ? 1.2 : 1.5, // Lower on mobile
+      lerp: isMobile ? 0.15 : 0.1, // Higher lerp on mobile = less inertia
     });
 
     lenisRef.current = lenis;
 
-    // FIXED: Proper Lenis + GSAP integration
-    // Use GSAP ticker to drive Lenis
-    gsap.ticker.add((time) => {
+    // FIXED: Proper Lenis + GSAP integration with throttling
+    const rafCallback = (time: number) => {
       lenis.raf(time * 1000);
-    });
+    };
+    gsap.ticker.add(rafCallback);
 
-    // FIXED: Sync ScrollTrigger with Lenis - minimal updates
+    // CRITICAL FIX: Throttle ScrollTrigger updates to every 2 frames on mobile
     let scrollTriggerUpdatePending = false;
+    let frameCount = 0;
+    const updateThrottle = isMobile ? 2 : 1; // Update every 2nd frame on mobile
+    
     lenis.on('scroll', () => {
-      if (!scrollTriggerUpdatePending) {
+      frameCount++;
+      if (!scrollTriggerUpdatePending && frameCount >= updateThrottle) {
         scrollTriggerUpdatePending = true;
+        frameCount = 0;
         requestAnimationFrame(() => {
           ScrollTrigger.update();
           scrollTriggerUpdatePending = false;
@@ -53,17 +59,12 @@ export default function ClientWrapper({ children }: { children: React.ReactNode 
       }
     });
 
-    // Disable lag smoothing for wheel - this can cause jank
+    // Disable lag smoothing - prevents jank on irregular frame times
     gsap.ticker.lagSmoothing(0);
-
-    // Set GSAP ticker to use requestAnimationFrame
-    gsap.ticker.fps(60);
 
     return () => {
       lenis.destroy();
-      gsap.ticker.remove((time) => {
-        lenis.raf(time * 1000);
-      });
+      gsap.ticker.remove(rafCallback);
       lenisRef.current = null;
     };
   }, []);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
@@ -8,12 +8,34 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+// OPTIMIZED: Move budget options outside component to prevent re-creation
+const BUDGET_OPTIONS = ["Less than €10k", "€10k - €50k", "€50k+"] as const;
+
 export default function Contact() {
   const contactRef = useRef<HTMLDivElement>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedBudget, setSelectedBudget] = useState("Less than €10k");
-  const budgetOptions = ["Less than €10k", "€10k - €50k", "€50k+"];
+  const [selectedBudget, setSelectedBudget] = useState<string>(BUDGET_OPTIONS[0]);
+  
+  // OPTIMIZED: Memoize handlers to prevent re-creation
+  const handleModalOpen = useCallback(() => setIsModalOpen(true), []);
+  const handleModalClose = useCallback(() => {
+    setIsModalOpen(false);
+    setIsDropdownOpen(false); // Close dropdown when modal closes
+  }, []);
+  const handleDropdownToggle = useCallback(() => setIsDropdownOpen(prev => !prev), []);
+  
+  const handleBudgetSelect = useCallback((option: string) => {
+    setSelectedBudget(option);
+    setIsDropdownOpen(false);
+  }, []);
+
+  const handleFormSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    setIsModalOpen(false);
+    setIsDropdownOpen(false);
+  }, []);
+
   useEffect(() => {
     const mm = gsap.matchMedia();
 
@@ -54,10 +76,32 @@ export default function Contact() {
     return () => mm.revert();
   }, []);
 
-  // Update text shadow to force SVG filter application in some browsers
+  // OPTIMIZED: Memoize budget options rendering
+  const budgetOptionsList = useMemo(() => (
+    BUDGET_OPTIONS.map(option => (
+      <li 
+        key={option} 
+        className={`custom-select-option ${selectedBudget === option ? 'selected' : ''}`}
+        onClick={() => handleBudgetSelect(option)}
+        role="option"
+        aria-selected={selectedBudget === option}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleBudgetSelect(option);
+          }
+        }}
+      >
+        {option}
+      </li>
+    ))
+  ), [selectedBudget, handleBudgetSelect]);
+
   return (
     <section className="contact-section" id="contact" ref={contactRef} data-nav-theme="light">
-      <svg width="0" height="0" style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
+      {/* OPTIMIZED: SVG filter only rendered once, hidden from accessibility tree */}
+      <svg width="0" height="0" style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
         <defs>
           <filter id="sand-storm" x="-20%" y="-20%" width="200%" height="200%">
             <feGaussianBlur in="SourceGraphic" stdDeviation="0 0" result="BLUR" className="sand-blur" />
@@ -81,7 +125,7 @@ export default function Contact() {
       </div>
 
       <div className="contact-actions">
-        <button className="contact-cta-btn" onClick={() => setIsModalOpen(true)}>
+        <button className="contact-cta-btn" onClick={handleModalOpen}>
           Start a Project
         </button>
         <a href="mailto:hello@lumiere.com" className="contact-email-wrapper">
@@ -92,76 +136,58 @@ export default function Contact() {
 
       <div className="contact-locations">Warsaw · Vienna · Paris</div>
 
-      {/* Modal */}
-      <div className={`contact-modal ${isModalOpen ? 'is-open' : ''}`}>
-        <div className="contact-modal-backdrop" onClick={() => setIsModalOpen(false)} aria-hidden="true"></div>
-        <div className="contact-modal-content" role="dialog" aria-labelledby="modal-title" aria-modal="true">
-          <button className="contact-modal-close" onClick={() => setIsModalOpen(false)} aria-label="Close modal">
-            <span></span>
-            <span></span>
-          </button>
-          
-          <h3 id="modal-title" className="contact-modal-title cormorant-italic">Inquire</h3>
-          <form className="contact-form" onSubmit={(e) => { e.preventDefault(); setIsModalOpen(false); }}>
-            <div className="form-group">
-              <label htmlFor="contact-name">Name</label>
-              <input id="contact-name" type="text" required placeholder="John Doe" />
-            </div>
-            <div className="form-group">
-              <label htmlFor="contact-email">Email</label>
-              <input id="contact-email" type="email" required placeholder="john@example.com" />
-            </div>
-            <div className="form-group custom-dropdown-group">
-              <label id="budget-label">Budget</label>
-              <div className="custom-select-wrapper">
-                <button
-                  type="button"
-                  className={`custom-select-trigger ${isDropdownOpen ? 'open' : ''}`}
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  aria-haspopup="listbox"
-                  aria-expanded={isDropdownOpen}
-                  aria-labelledby="budget-label"
-                >
-                  <span>{selectedBudget}</span>
-                  <span className="custom-select-arrow"></span>
-                </button>
-                <ul 
-                  className={`custom-select-options ${isDropdownOpen ? 'open' : ''}`} 
-                  role="listbox" 
-                  aria-labelledby="budget-label"
-                >
-                  {budgetOptions.map(option => (
-                    <li 
-                      key={option} 
-                      className={`custom-select-option ${selectedBudget === option ? 'selected' : ''}`}
-                      onClick={() => {
-                        setSelectedBudget(option);
-                        setIsDropdownOpen(false);
-                      }}
-                      role="option"
-                      aria-selected={selectedBudget === option}
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          setSelectedBudget(option);
-                          setIsDropdownOpen(false);
-                        }
-                      }}
-                    >
-                      {option}
-                    </li>
-                  ))}
-                </ul>
+      {/* OPTIMIZED: Modal only renders content when open */}
+      {isModalOpen && (
+        <div className="contact-modal is-open">
+          <div className="contact-modal-backdrop" onClick={handleModalClose} aria-hidden="true"></div>
+          <div className="contact-modal-content" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+            <button className="contact-modal-close" onClick={handleModalClose} aria-label="Close modal">
+              <span></span>
+              <span></span>
+            </button>
+            
+            <h3 id="modal-title" className="contact-modal-title cormorant-italic">Inquire</h3>
+            <form className="contact-form" onSubmit={handleFormSubmit}>
+              <div className="form-group">
+                <label htmlFor="contact-name">Name</label>
+                <input id="contact-name" type="text" required placeholder="John Doe" autoFocus />
               </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="contact-message">Message</label>
-              <textarea id="contact-message" rows={4} required placeholder="Tell us about your project..."></textarea>
-            </div>
-            <button type="submit" className="form-submit-btn">Send Message</button>
-          </form>
+              <div className="form-group">
+                <label htmlFor="contact-email">Email</label>
+                <input id="contact-email" type="email" required placeholder="john@example.com" />
+              </div>
+              <div className="form-group custom-dropdown-group">
+                <label id="budget-label">Budget</label>
+                <div className="custom-select-wrapper">
+                  <button
+                    type="button"
+                    className={`custom-select-trigger ${isDropdownOpen ? 'open' : ''}`}
+                    onClick={handleDropdownToggle}
+                    aria-haspopup="listbox"
+                    aria-expanded={isDropdownOpen}
+                    aria-labelledby="budget-label"
+                  >
+                    <span>{selectedBudget}</span>
+                    <span className="custom-select-arrow"></span>
+                  </button>
+                  <ul 
+                    className={`custom-select-options ${isDropdownOpen ? 'open' : ''}`} 
+                    role="listbox" 
+                    aria-labelledby="budget-label"
+                  >
+                    {budgetOptionsList}
+                  </ul>
+                </div>
+              </div>
+              <div className="form-group">
+                <label htmlFor="contact-message">Message</label>
+                <textarea id="contact-message" rows={4} required placeholder="Tell us about your project..."></textarea>
+              </div>
+              <button type="submit" className="form-submit-btn">Send Message</button>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

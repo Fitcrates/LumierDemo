@@ -11,16 +11,37 @@ export default function Cursor() {
   useEffect(() => {
     if (!dotRef.current || !ringRef.current || !glowRef.current) return;
 
+    // CRITICAL FIX: Hide cursor on mobile/touch devices
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice) {
+      if (dotRef.current) dotRef.current.style.display = 'none';
+      if (ringRef.current) ringRef.current.style.display = 'none';
+      if (glowRef.current) glowRef.current.style.display = 'none';
+      return; // Exit early - no cursor logic needed on touch devices
+    }
+
     let mouseX = window.innerWidth / 2;
     let mouseY = window.innerHeight / 2;
     let ringX = mouseX;
     let ringY = mouseY;
+    let glowX = mouseX;
+    let glowY = mouseY;
 
-    // OPTIMIZED: Use direct DOM manipulation instead of gsap.set() in render loop
-    // This is much faster than gsap.set() at 60fps
     const ringElement = ringRef.current;
     const dotElement = dotRef.current;
     const glowElement = glowRef.current;
+
+    // CRITICAL FIX: Use quickTo for glow - reuses single tween instead of creating new ones
+    const glowQuickX = gsap.quickTo(glowElement, "x", { duration: 0.6, ease: "power2.out" });
+    const glowQuickY = gsap.quickTo(glowElement, "y", { duration: 0.6, ease: "power2.out" });
+    
+    // Reusable tween for opacity changes
+    let currentOpacity = 1;
+    const glowOpacityTween = gsap.to(glowElement, { 
+      opacity: 1, 
+      duration: 0.3, 
+      paused: true 
+    });
 
     const onMouseMove = (e: MouseEvent) => {
       mouseX = e.clientX;
@@ -31,16 +52,9 @@ export default function Cursor() {
         dotElement.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
       }
 
-      // Glow follows with slight delay via GSAP - on every move
-      if (glowElement) {
-        gsap.to(glowElement, {
-          x: mouseX,
-          y: mouseY,
-          duration: 0.6,
-          ease: "power2.out",
-          overwrite: "auto"
-        });
-      }
+      // FIXED: Use quickTo instead of gsap.to() - much more efficient
+      glowQuickX(mouseX);
+      glowQuickY(mouseY);
 
       // Check hover states
       const target = e.target as HTMLElement;
@@ -50,21 +64,21 @@ export default function Cursor() {
         ringRef.current?.classList.remove('hover');
       }
 
-      // Only trigger GSAP for glow opacity changes (not position in render loop)
-      if (glowElement) {
-        const closestSection = target.closest('[data-nav-theme]');
-        const isLight = closestSection?.getAttribute('data-nav-theme') === 'light';
-        gsap.to(glowElement, {
-          opacity: isLight ? 0 : 1,
-          duration: 0.3,
-          overwrite: "auto"
-        });
+      // FIXED: Only update opacity if it actually changed
+      const closestSection = target.closest('[data-nav-theme]');
+      const isLight = closestSection?.getAttribute('data-nav-theme') === 'light';
+      const targetOpacity = isLight ? 0 : 1;
+      
+      if (targetOpacity !== currentOpacity) {
+        currentOpacity = targetOpacity;
+        glowOpacityTween.vars.opacity = targetOpacity;
+        glowOpacityTween.invalidate().restart();
       }
     };
 
-    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
 
-    // FIXED: Render loop for ring lerp - use direct DOM with visibility check
+    // FIXED: Render loop with visibility check
     let rafId: number;
     let isWindowFocused = true;
 
@@ -74,13 +88,12 @@ export default function Cursor() {
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     const render = () => {
-      // Only animate when window is focused - saves CPU when tab is background
       if (isWindowFocused) {
+        // Lerp for ring
         ringX += (mouseX - ringX) * 0.08;
         ringY += (mouseY - ringY) * 0.08;
 
         if (ringElement) {
-          // Direct transform is faster than gsap.set()
           ringElement.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
         }
       }
@@ -94,6 +107,7 @@ export default function Cursor() {
       window.removeEventListener("mousemove", onMouseMove);
       cancelAnimationFrame(rafId);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      glowOpacityTween.kill();
     };
   }, []);
 

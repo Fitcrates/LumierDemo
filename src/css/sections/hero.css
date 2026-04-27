@@ -1,0 +1,139 @@
+/* SECTION 1 - HERO */
+.hero-wrapper {
+  height: 300vh;
+  position: relative;
+}
+
+.hero-sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  width: 100%;
+  overflow: hidden;
+  background: var(--void);
+}
+
+.hero-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.hero-text-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  padding: 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.hero-title {
+  font-size: clamp(7rem, 16vw, 15rem);
+  color: #ffffff;
+  line-height: 0.9;
+}
+
+.title-top {
+  align-self: flex-start;
+  margin-top: 10vh;
+}
+
+.title-bottom {
+  align-self: flex-end;
+  margin-top: auto;
+  padding-bottom: 2vh;
+}
+
+.hero-title .char {
+  transform: translateY(120%);
+}
+
+.hero-tagline {
+  align-self: flex-end;
+  text-align: right;
+  font-size: 1rem;
+  opacity: 0;
+}
+
+.hero-divider {
+  position: absolute;
+  top: 62%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: rgba(191, 140, 58, 0.15);
+  transform: scaleX(0);
+  transform-origin: center;
+  z-index: 2;
+}
+
+.hero-transition-plane {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--parchment);
+  opacity: 0;
+  z-index: 3;
+}
+
+/* Scroll Indicator */
+.hero-scroll-indicator {
+  position: absolute;
+  bottom: 5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-scroll-indicator span {
+  font-family: var(--font-dm-sans);
+  font-size: 0.55rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: #fff;
+  opacity: 0.7;
+}
+
+.hero-scroll-line {
+  width: 1px;
+  height: 30px;
+  background-color: rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-scroll-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background-color: #fff;
+  animation: scrollLine 2s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+@keyframes scrollLine {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  100% {
+    transform: translateY(200%);
+  }
+}

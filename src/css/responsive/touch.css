@@ -1,0 +1,17 @@
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE - TOUCH DEVICE OVERRIDES
+   ═══════════════════════════════════════════════════════════ */
+
+@media (hover: none) and (pointer: coarse) {
+  body,
+  a,
+  button {
+    cursor: auto;
+  }
+
+  .cursor-dot,
+  .cursor-ring,
+  .cursor-glow {
+    display: none !important;
+  }
+}

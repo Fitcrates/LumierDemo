@@ -1,0 +1,36 @@
+/* SECTION 5 - MARQUEE */
+.marquee-section {
+  height: 80px;
+  background-color: var(--ink);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  /* FIXED: Isolate layout calculations for better performance */
+  contain: layout style;
+}
+
+.marquee-content {
+  display: inline-block;
+  font-family: var(--font-dm-sans);
+  font-weight: 300;
+  font-size: 0.7rem;
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  color: rgba(191, 140, 58, 0.5);
+  animation: marquee 40s linear infinite;
+  /* FIXED: GPU acceleration for smooth animation during scroll */
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translate3d(0, 0, 0); /* FIXED: Use translate3d for GPU acceleration */
+  }
+
+  100% {
+    transform: translate3d(-50%, 0, 0); /* FIXED: Use translate3d for GPU acceleration */
+  }
+}

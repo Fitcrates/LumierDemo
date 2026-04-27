@@ -1,0 +1,49 @@
+/* SECTION 2 - STATEMENT */
+.statement-wrapper {
+  height: 200vh;
+  background-color: var(--parchment);
+  color: var(--ink);
+  position: relative;
+}
+
+.statement-sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10vw;
+}
+
+.statement-text {
+  font-size: clamp(2.8rem, 5.5vw, 5.5rem);
+  text-align: center;
+}
+
+.statement-text .word {
+  opacity: 0.08;
+  filter: blur(2px);
+  color: var(--text-muted);
+  will-change: opacity, filter, color;
+  /* REMOVED: transform: translateZ(0) - was creating hundreds of GPU layers causing mobile stutter */
+}
+
+.statement-line {
+  position: absolute;
+  left: 5vw;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background-color: var(--gold);
+  transform: scaleY(0);
+  transform-origin: top;
+}
+
+.statement-credit {
+  position: absolute;
+  bottom: 15vh;
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  opacity: 0;
+}

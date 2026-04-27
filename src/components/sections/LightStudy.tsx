@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 
 export default function LightStudy() {
@@ -16,8 +16,8 @@ export default function LightStudy() {
   const radiusRef = useRef(150);
   const isInitializedRef = useRef(false);
 
-  // Update dimensions and mobile state
-  const updateDimensions = () => {
+  // OPTIMIZED: Memoize dimension update function
+  const updateDimensions = useCallback(() => {
     isMobileRef.current = window.innerWidth < 768;
     lerpFactorRef.current = isMobileRef.current ? 0.35 : 0.28;
     radiusRef.current = isMobileRef.current ? 75 : 150;
@@ -31,7 +31,7 @@ export default function LightStudy() {
         height: rect.height 
       };
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Initialize mouse position in center
@@ -43,7 +43,6 @@ export default function LightStudy() {
     isInitializedRef.current = true;
 
     // FIXED: Use IntersectionObserver to pause animation when off-screen
-    // This is the key fix - stop the RAF loop when section is not visible
     const observer = new IntersectionObserver(
       ([entry]) => {
         isVisibleRef.current = entry.isIntersecting;
@@ -51,15 +50,32 @@ export default function LightStudy() {
       { threshold: 0 }
     );
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
+    const container = containerRef.current;
+    if (container) {
+      observer.observe(container);
     }
 
-    // Pointer move handler
-    const handlePointerMove = (e: PointerEvent | TouchEvent) => {
-      const clientX = 'touches' in e ? e.touches[0].clientX : (e as PointerEvent).clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : (e as PointerEvent).clientY;
+    // FIXED: Better mobile touch handling - use direct event listeners on container
+    const updateTouchPosition = (clientX: number, clientY: number) => {
       mousePosRef.current = { x: clientX, y: clientY };
+    };
+
+    // Pointer move handler for desktop
+    const handlePointerMove = (e: PointerEvent) => {
+      updateTouchPosition(e.clientX, e.clientY);
+    };
+
+    // Touch handlers for mobile - use capture phase to get events before Lenis
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        updateTouchPosition(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        updateTouchPosition(e.touches[0].clientX, e.touches[0].clientY);
+      }
     };
 
     // FIXED: Use passive scroll listener with proper throttling
@@ -72,13 +88,21 @@ export default function LightStudy() {
       });
     };
 
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("touchmove", handlePointerMove, { passive: true });
+    // Add listeners to both window and container for better mobile support
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
     window.addEventListener("scroll", handleScroll, { passive: true });
+
+    // Also add touch listeners to the container for better mobile tracking
+    if (container) {
+      container.addEventListener("touchstart", handleTouchStart, { passive: true });
+      container.addEventListener("touchmove", handleTouchMove, { passive: true });
+    }
 
     // FIXED: RAF loop now checks isVisibleRef before animating
     let lastTime = 0;
-    const frameInterval = 16;
+    const frameInterval = isMobileRef.current ? 33 : 16; // 30fps on mobile, 60fps desktop
 
     const update = (time: number) => {
       // Only animate when visible - this is the key optimization
@@ -109,13 +133,18 @@ export default function LightStudy() {
 
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("touchmove", handlePointerMove);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("scroll", handleScroll);
+      if (container) {
+        container.removeEventListener("touchstart", handleTouchStart);
+        container.removeEventListener("touchmove", handleTouchMove);
+      }
       if (scrollRAF) cancelAnimationFrame(scrollRAF);
       cancelAnimationFrame(rafIdRef.current);
       observer.disconnect();
     };
-  }, []);
+  }, [updateDimensions]); // FIXED: Add updateDimensions to deps
 
   return (
     <section
@@ -144,7 +173,8 @@ export default function LightStudy() {
           position: "absolute",
           inset: 0,
           clipPath: "circle(0px at 50% 50%)",
-          pointerEvents: "none"
+          pointerEvents: "none",
+          willChange: "clip-path" // OPTIMIZED: Hint browser about animation
         }}
       >
         <Image

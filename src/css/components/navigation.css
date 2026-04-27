@@ -1,0 +1,215 @@
+/* ═══════════════════════════════════════════════════════════
+   COMPONENT - NAVIGATION
+   ═══════════════════════════════════════════════════════════ */
+
+/* Navigation Background Morph */
+.nav-hamburger-bg {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 250px;
+  height: 110px;
+  background-color: var(--cream);
+  border-radius: 50%;
+  z-index: 99;
+  pointer-events: none;
+  transition: background-color 0.4s ease, backdrop-filter 0.4s ease;
+  backdrop-filter: none;
+}
+
+.nav-hamburger-bg.nav-top {
+  background-color: var(--cream);
+  backdrop-filter: none;
+}
+
+.nav-hamburger-bg.nav-scrolled.theme-dark {
+  background-color: rgba(8, 7, 9, 0.7);
+  backdrop-filter: blur(12px);
+}
+
+.nav-hamburger-bg.nav-scrolled.theme-light {
+  background-color: rgba(244, 240, 232, 0.85);
+  backdrop-filter: blur(12px);
+}
+
+/* Main Nav Container */
+.main-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 90px;
+  padding: 0 4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  background: transparent;
+  pointer-events: none;
+}
+
+.main-nav.nav-scrolled {
+  pointer-events: auto;
+}
+
+.main-nav.theme-dark {
+  color: var(--text-on-dark);
+}
+
+.main-nav.theme-light {
+  color: var(--ink);
+}
+
+.nav-logo {
+  font-family: var(--font-cormorant);
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-links a {
+  font-family: var(--font-dm-sans);
+  font-weight: 300;
+  font-size: 0.65rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+.nav-logo,
+.nav-links {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
+}
+
+.main-nav.nav-scrolled .nav-logo,
+.main-nav.nav-scrolled .nav-links {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+  transition-delay: 0.2s;
+}
+
+/* Hamburger Menu */
+.nav-hamburger {
+  position: fixed;
+  top: 35px;
+  right: 40px;
+  width: 35px;
+  height: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: none;
+  z-index: 105;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  background: transparent;
+  border: none;
+}
+
+.nav-hamburger::after {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  bottom: -20px;
+  left: -20px;
+}
+
+.nav-hamburger.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-15px);
+}
+
+.nav-hamburger span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: var(--ink);
+  transition: transform 0.3s ease, width 0.3s ease, top 0.3s ease, background-color 0.3s ease;
+  position: relative;
+  transform-origin: center;
+}
+
+.nav-hamburger.is-scrolled.theme-dark span {
+  background-color: var(--text-on-dark);
+}
+
+.nav-hamburger:not(.is-open):hover span:first-child {
+  transform: translateY(3px);
+}
+
+.nav-hamburger:not(.is-open):hover span:last-child {
+  transform: translateY(-3px);
+  width: 70%;
+  align-self: flex-end;
+}
+
+.nav-hamburger.is-open {
+  justify-content: center;
+}
+
+.nav-hamburger.is-open span {
+  position: absolute;
+  top: 50%;
+  margin-top: -1px;
+}
+
+.nav-hamburger.is-open span:first-child {
+  transform: rotate(45deg);
+}
+
+.nav-hamburger.is-open span:last-child {
+  transform: rotate(-45deg);
+  width: 100%;
+}
+
+/* Fullscreen Menu */
+.fullscreen-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--cream);
+  z-index: 104;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.fullscreen-menu.is-open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.fullscreen-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.fullscreen-links a {
+  font-family: var(--font-cormorant);
+  font-size: clamp(3rem, 6vw, 5rem);
+  color: var(--ink);
+  text-decoration: none;
+  text-transform: none;
+  letter-spacing: normal;
+  transition: color 0.3s ease;
+}
+
+.fullscreen-links a:hover {
+  color: var(--gold);
+}

@@ -45,7 +45,8 @@ export default function Services() {
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
-    window.addEventListener("resize", checkMobile);
+    const resizeHandler = () => checkMobile();
+    window.addEventListener("resize", resizeHandler, { passive: true });
 
     // FIXED: Use IntersectionObserver instead of global scroll listener
     const observer = new IntersectionObserver(
@@ -94,7 +95,7 @@ export default function Services() {
 
     return () => {
       mm.revert();
-      window.removeEventListener("resize", checkMobile);
+      window.removeEventListener("resize", resizeHandler);
       observer.disconnect();
     };
   }, []);

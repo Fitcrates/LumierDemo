@@ -1,0 +1,16 @@
+/* SECTION - AWARDS */
+.awards-section {
+  padding: 15vh 8vw;
+  background-color: #0a0a0a;
+  color: #f5f0e8;
+  position: relative;
+  overflow: hidden;
+}
+
+.award-row-content {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr auto;
+  align-items: center;
+  gap: 2rem;
+  padding: 0 1rem;
+}

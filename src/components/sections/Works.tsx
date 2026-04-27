@@ -58,6 +58,7 @@ export default function Works() {
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       if (!worksRef.current) return;
 
+      // FIXED: Faster reveal with earlier trigger for immediate visual feedback
       const projects = worksRef.current.querySelectorAll(".project-1, .project-3");
       projects.forEach((proj) => {
         const imgWrapper = proj.querySelector(".project-img-wrapper");
@@ -65,16 +66,16 @@ export default function Works() {
           gsap.to(imgWrapper, {
             scrollTrigger: {
               trigger: proj,
-              start: "top 70%",
+              start: "top 85%", // Earlier trigger (was 70%)
             },
             clipPath: "inset(0% 0% 0% 0%)",
-            duration: 1.2,
-            ease: "power3.inOut"
+            duration: 0.9, // Faster (was 1.2s)
+            ease: "power2.out" // Snappier easing (was power3.inOut)
           });
         }
       });
 
-      // Project 2 parallax
+      // FIXED: Project 2 parallax with slight smoothing
       gsap.fromTo(".project-2 .project-img-inner",
         { scale: 1.08 },
         {
@@ -82,7 +83,7 @@ export default function Works() {
             trigger: ".project-2",
             start: "top bottom",
             end: "bottom top",
-            scrub: true,
+            scrub: 0.5, // Added smoothing (was true/instant)
           },
           scale: 1.0,
           force3D: true,
@@ -299,7 +300,14 @@ export default function Works() {
 
       <div className="project project-1" data-nav-theme="dark">
         <div className="project-img-wrapper">
-          <Image src="/images/noirWorks.webp" alt="Villa Noir Interior Architecture" className="project-img-inner" fill sizes="(max-width: 768px) 100vw, 50vw" />
+          <Image 
+            src="/images/noirWorks.webp" 
+            alt="Villa Noir Interior Architecture" 
+            className="project-img-inner" 
+            fill 
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority // FIXED: Priority loading for first project image
+          />
         </div>
         <div className="project-text">
           <div className="project-year">24</div>
@@ -310,7 +318,14 @@ export default function Works() {
 
       <div className="project project-2" data-nav-theme="light">
         <div className="project-img-wrapper">
-          <Image src="/images/ParisAtelier.webp" alt="L'Atelier The Glasshouse Interior" className="project-img-inner" fill sizes="(max-width: 768px) 100vw, 100vw" />
+          <Image 
+            src="/images/ParisAtelier.webp" 
+            alt="L'Atelier The Glasshouse Interior" 
+            className="project-img-inner" 
+            fill 
+            sizes="(max-width: 768px) 100vw, 100vw"
+            priority // FIXED: Priority loading for second project image
+          />
           <div className="project-overlay"></div>
         </div>
         <div className="project-text">

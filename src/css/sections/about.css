@@ -1,0 +1,67 @@
+/* SECTION 6 - ABOUT */
+.about-section {
+  background-color: var(--parchment);
+  color: var(--ink);
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: 10vh 10vw;
+  gap: 5vw;
+}
+
+.about-img-container {
+  width: 45%;
+  position: relative;
+}
+
+.about-img-wrapper {
+  width: 100%;
+  aspect-ratio: 3/4;
+  position: relative;
+  overflow: hidden;
+}
+
+.about-img-inner {
+  width: 100%;
+  height: 120%;
+  /* For parallax */
+  object-fit: cover;
+  position: absolute;
+  top: -10%;
+}
+
+.about-img-border {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--gold-dim);
+  pointer-events: none;
+}
+
+.about-text-container {
+  width: 55%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transform: translateY(40px);
+}
+
+.about-title {
+  font-size: 5rem;
+  margin-left: 0;
+  z-index: 2;
+  margin-bottom: 2rem;
+}
+
+.about-desc p {
+  margin-bottom: 1.5rem;
+  max-width: 480px;
+}
+
+.about-sig {
+  font-size: 2.4rem;
+  color: var(--gold);
+  margin-top: 2rem;
+}

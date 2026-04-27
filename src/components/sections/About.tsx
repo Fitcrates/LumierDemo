@@ -18,17 +18,17 @@ export default function About() {
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       if (!aboutRef.current) return;
 
+      // FIXED: Lighter parallax with less range for smoother performance
       gsap.to(".about-img-inner", {
         scrollTrigger: {
           trigger: aboutRef.current,
           start: "top bottom",
           end: "bottom top",
-          scrub: true,
+          scrub: 0.5, // Added slight smoothing instead of true (instant)
         },
-        y: "-60px",
+        y: "-40px", // Reduced from -60px for less GPU work
         ease: "none",
         force3D: true,
-        willChange: "transform"
       });
 
       gsap.to(".about-text-container", {
@@ -50,7 +50,15 @@ export default function About() {
       <div className="about-img-container">
         <div className="about-img-border"></div>
         <div className="about-img-wrapper">
-          <Image src="/images/Atelier.webp" alt="Lumière Atelier Studio Workspace" className="about-img-inner" width={800} height={1200} sizes="(max-width: 768px) 100vw, 50vw" />
+          <Image 
+            src="/images/Atelier.webp" 
+            alt="Lumière Atelier Studio Workspace" 
+            className="about-img-inner" 
+            width={800} 
+            height={1200} 
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority // FIXED: Priority loading to prevent jank during parallax
+          />
         </div>
       </div>
       <div className="about-text-container">

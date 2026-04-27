@@ -200,41 +200,27 @@ export default function Awards() {
               if (el) lineRefs.current[i] = el;
             }}
             onMouseEnter={(e) => {
-              gsap.to(e.currentTarget, {
-                backgroundColor: "rgba(255,255,255,0.03)",
-                x: 8,
-                duration: 0.4,
-                ease: "power2.out",
-              });
-              gsap.to(
-                e.currentTarget.querySelector(".award-year"),
-                {
-                  color: "#c8a050",
-                  duration: 0.3,
-                }
-              );
+              // FIXED: Use CSS transitions instead of GSAP for simple hover effects
+              const row = e.currentTarget as HTMLElement;
+              const year = row.querySelector(".award-year") as HTMLElement;
+              row.style.backgroundColor = "rgba(255,255,255,0.03)";
+              row.style.transform = "translateX(8px)";
+              if (year) year.style.color = "#c8a050";
             }}
             onMouseLeave={(e) => {
-              gsap.to(e.currentTarget, {
-                backgroundColor: "transparent",
-                x: 0,
-                duration: 0.4,
-                ease: "power2.out",
-              });
-              gsap.to(
-                e.currentTarget.querySelector(".award-year"),
-                {
-                  color: "rgba(245,240,232,0.3)",
-                  duration: 0.3,
-                }
-              );
+              const row = e.currentTarget as HTMLElement;
+              const year = row.querySelector(".award-year") as HTMLElement;
+              row.style.backgroundColor = "transparent";
+              row.style.transform = "translateX(0)";
+              if (year) year.style.color = "rgba(245,240,232,0.3)";
             }}
             style={{
               position: "relative",
               cursor: "default",
               padding: "2rem 0",
               borderRadius: "4px",
-              transition: "none",
+              transition: "background-color 0.4s ease, transform 0.4s ease",
+              willChange: "transform",
             }}
           >
             {/* Top divider */}
@@ -281,6 +267,7 @@ export default function Awards() {
                   letterSpacing: "0.2em",
                   color: "rgba(245,240,232,0.3)",
                   fontVariantNumeric: "tabular-nums",
+                  transition: "color 0.3s ease",
                 }}
               >
                 {award.year}
