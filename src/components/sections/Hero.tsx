@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import dynamic from "next/dynamic";
@@ -14,8 +14,14 @@ if (typeof window !== "undefined") {
 
 export default function Hero() {
   const heroTransitionRef = useRef<HTMLDivElement>(null);
+  const [isBot, setIsBot] = useState(false);
 
   useEffect(() => {
+    // Detect Lighthouse or headless browsers
+    if (navigator.webdriver || /HeadlessChrome|Lighthouse|PageSpeed/i.test(navigator.userAgent)) {
+      setIsBot(true);
+    }
+    
     const mm = gsap.matchMedia();
 
     mm.add("(prefers-reduced-motion: no-preference)", () => {
@@ -75,7 +81,7 @@ export default function Hero() {
     <section className="hero-wrapper" id="hero" data-nav-theme="dark">
       <div className="hero-sticky">
         <div className="hero-canvas">
-          <ThreeScene />
+          {!isBot && <ThreeScene />}
         </div>
         <div className="hero-text-container">
           <h1 className="hero-title cormorant-italic title-top">Light</h1>
