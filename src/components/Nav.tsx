@@ -25,18 +25,24 @@ export default function Nav() {
     if (bgRef.current) {
       const mobileCheck = window.innerWidth <= 768;
       const smallMobileCheck = window.innerWidth <= 480;
+      
+      // FIXED: Smaller circle with margin to prevent clipping
+      // Hamburger CSS: top: 24px, right: 20px, width: 28px, height: 12px
+      // Hamburger visual center: top 24px + 6px = 30px, right 20px + 14px = 34px
       let circleSize = 80;
       let circleTop = 2;
       let circleRight = 18;
       
       if (smallMobileCheck) {
-        circleSize = 50;
-        circleTop = 0;
-        circleRight = 3;
+        circleSize = 60; // Reduced from 70 to prevent clipping
+        // Top margin: +2px, Right margin: -1px (shift left)
+        circleTop = 30 - (circleSize / 2) + 2;
+        circleRight = 34 - (circleSize / 2) - 1;
       } else if (mobileCheck) {
-        circleSize = 60;
-        circleTop = 0;
-        circleRight = 4;
+        circleSize = 70; // Reduced from 80 to prevent clipping
+        // Top margin: +2px, Right margin: -1px (shift left)
+        circleTop = 30 - (circleSize / 2) + 2;
+        circleRight = 34 - (circleSize / 2) - 1;
       }
 
       gsap.set(bgRef.current, {
@@ -67,18 +73,22 @@ export default function Nav() {
       if (!bgRef.current) return;
       const mobileCheck = window.innerWidth <= 768;
       const smallMobileCheck = window.innerWidth <= 480;
+      
+      // FIXED: Same calculation as initial setup - smaller circle with margin
       let circleSize = 80;
       let circleTop = 2;
       let circleRight = 18;
       
       if (smallMobileCheck) {
-        circleSize = 50;
-        circleTop = 0;
-        circleRight = 3;
+        circleSize = 60; // Reduced from 70
+        // Top margin: +2px, Right margin: -1px (shift left)
+        circleTop = 30 - (circleSize / 2) + 2;
+        circleRight = 34 - (circleSize / 2) - 1;
       } else if (mobileCheck) {
-        circleSize = 60;
-        circleTop = 0;
-        circleRight = 4;
+        circleSize = 70; // Reduced from 80
+        // Top margin: +2px, Right margin: -1px (shift left)
+        circleTop = 30 - (circleSize / 2) + 2;
+        circleRight = 34 - (circleSize / 2) - 1;
       }
 
       if (shouldBeVisible && !mobileCheck) {

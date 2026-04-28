@@ -134,12 +134,9 @@ export default function Works() {
       ctx.clearRect(0, 0, w, h);
 
       const progress = progressRef.current;
-      if (progress <= 0.001) return;
-
-      const trailSpan = 0.10;
-      const trailSteps = 40;
-
-      // Draw guideline
+      
+      // FIXED: Always draw guideline, even at progress 0
+      // Draw guideline path
       ctx.beginPath();
       ctx.strokeStyle = "rgba(191, 140, 58, 0.05)";
       ctx.lineWidth = 1;
@@ -150,6 +147,12 @@ export default function Works() {
         else ctx.lineTo(pt.x, pt.y);
       }
       ctx.stroke();
+      
+      // Only draw photon if progress > 0
+      if (progress <= 0.001) return;
+
+      const trailSpan = 0.10;
+      const trailSteps = 40;
 
       // Build trail points
       const trailPoints: { x: number; y: number; t: number }[] = [];
@@ -222,43 +225,49 @@ export default function Works() {
       ctx.fill();
     };
 
-    // Animation loop - now properly checks visibility
+    // CRITICAL FIX: Animation loop that STOPS when not visible
     let lastRenderedProgress = -1;
     let lastFrameTime = 0;
     const frameInterval = 33;
 
     const animate = (time: number) => {
-      // FIXED: Only render when visible AND has meaningful progress
-      // This is the key optimization - skip rendering when off-screen
-      if (isVisibleRef.current && !isMobileRef.current && progressRef.current > 0.001) {
+      // FIXED: Only continue RAF when visible
+      if (isVisibleRef.current && !isMobileRef.current) {
         const timeSinceLastFrame = time - lastFrameTime;
         
-        if (timeSinceLastFrame >= frameInterval && Math.abs(progressRef.current - lastRenderedProgress) > 0.001) {
+        // Always draw at least once when visible (for guideline)
+        if (timeSinceLastFrame >= frameInterval || lastRenderedProgress === -1) {
           drawPhoton();
           lastRenderedProgress = progressRef.current;
           lastFrameTime = time;
         }
-      } else {
-        // When not visible, still render occasionally to keep canvas fresh but not every frame
-        if (time - lastFrameTime >= 100) {
-          lastFrameTime = time;
-        }
+        // CRITICAL: Only request next frame if still visible
+        rafRef.current = requestAnimationFrame(animate);
       }
-      rafRef.current = requestAnimationFrame(animate);
+      // If not visible, RAF stops here - no more frames requested
     };
+    
+    // Start animation
     rafRef.current = requestAnimationFrame(animate);
 
-    // Pause rAF rendering when off-screen - use higher threshold for better detection
+    // Pause/Resume rAF rendering based on visibility
     const observer = new IntersectionObserver(
       ([entry]) => { 
+        const wasVisible = isVisibleRef.current;
         isVisibleRef.current = entry.isIntersecting;
-        // Clear canvas when not visible to save memory
+        
+        // Clear canvas when not visible
         if (!entry.isIntersecting && canvasRef.current) {
           const ctx = canvasRef.current.getContext("2d");
           if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         }
+        
+        // CRITICAL: Restart RAF when becoming visible
+        if (!wasVisible && entry.isIntersecting && !isMobileRef.current) {
+          rafRef.current = requestAnimationFrame(animate);
+        }
       },
-      { threshold: 0.1 } // More strict - needs 10% visible
+      { threshold: 0.1 }
     );
     if (worksRef.current) observer.observe(worksRef.current);
 

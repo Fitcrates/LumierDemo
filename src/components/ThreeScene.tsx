@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useMemo } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { useEffect, useRef, useMemo, useState } from "react";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { useGLTF, Environment, Image as DreiImage, useTexture } from "@react-three/drei";
 import { EffectComposer, Bloom, Vignette, Noise } from "@react-three/postprocessing";
 import * as THREE from "three";
@@ -10,7 +10,7 @@ import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-function Scene({ isMobile }: { isMobile: boolean }) {
+function Scene({ isMobile, isVisible }: { isMobile: boolean; isVisible: boolean }) {
   const { scene } = useGLTF("/model/bulbs.glb");
   // Use heroDesktop.webp for desktop, hero-bg-industrial.webp for mobile
   const bgImage = isMobile ? "/images/hero-bg-industrial.webp" : "/images/heroDesktop.webp";
@@ -21,8 +21,17 @@ function Scene({ isMobile }: { isMobile: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const pointLightRef = useRef<THREE.PointLight>(null);
   const overlayMatRef = useRef<THREE.MeshBasicMaterial>(null);
-  const { camera, size } = useThree();
+  const { camera, size, gl } = useThree();
   const scale = size.width < 768 ? 0.45 : 1;
+  
+  // CRITICAL FIX: Pause rendering when Hero section is off-screen
+  useFrame(() => {
+    if (!isVisible) {
+      // Stop rendering by not updating anything
+      return;
+    }
+    // When visible, normal rendering continues automatically
+  });
 
   // Obliczenie absolutnych, statycznych wymiarów dla płaszczyzny tła
   // Ratuje to przed glitchem skalowania, gdy kamera zmienia pozycję Z
@@ -194,29 +203,55 @@ function Scene({ isMobile }: { isMobile: boolean }) {
 
 export default function ThreeScene() {
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const [isVisible, setIsVisible] = useState(true);
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // CRITICAL FIX: Stop Three.js rendering when Hero section is off-screen
+    const heroSection = document.querySelector('.hero-wrapper');
+    if (!heroSection) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+        // Additional optimization: reduce frame rate when barely visible
+        if (entry.intersectionRatio < 0.1) {
+          setIsVisible(false);
+        }
+      },
+      { threshold: [0, 0.1] } // Trigger at 0% and 10% visibility
+    );
+
+    observer.observe(heroSection);
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <Canvas 
-      camera={{ fov: 42, position: [0, 0, 10] }} 
-      gl={{ antialias: !isMobile, alpha: true, powerPreference: "high-performance" }}
-      dpr={[1, isMobile ? 1 : 1.5]}
-    >
-      <color attach="background" args={['#080709']} />
-      <Scene isMobile={isMobile} />
-      {!isMobile ? (
-        <EffectComposer>
-          <Bloom luminanceThreshold={0.4} luminanceSmoothing={0.3} mipmapBlur intensity={2.8} radius={0.85} />
-          <Noise opacity={0.04} />
-          <Vignette offset={0.3} darkness={0.85} />
-        </EffectComposer>
-      ) : (
-        // Na mobile: mniejszy Bloom (wydajność) + Noise + Vignette żeby nie było tak ciemno
-        <EffectComposer>
-          <Bloom luminanceThreshold={0.6} luminanceSmoothing={0.4} mipmapBlur intensity={1.2} radius={0.7} />
-          <Noise opacity={0.06} />
-          <Vignette offset={0.25} darkness={0.7} />
-        </EffectComposer>
-      )}
-    </Canvas>
+    <div ref={canvasRef} style={{ width: '100%', height: '100%' }}>
+      <Canvas 
+        camera={{ fov: 42, position: [0, 0, 10] }} 
+        gl={{ antialias: !isMobile, alpha: true, powerPreference: "high-performance" }}
+        dpr={[1, isMobile ? 1 : 1.5]}
+        frameloop={isVisible ? "always" : "never"} // CRITICAL: Stop RAF when not visible
+      >
+        <color attach="background" args={['#080709']} />
+        <Scene isMobile={isMobile} isVisible={isVisible} />
+        {!isMobile ? (
+          <EffectComposer>
+            <Bloom luminanceThreshold={0.4} luminanceSmoothing={0.3} mipmapBlur intensity={2.8} radius={0.85} />
+            <Noise opacity={0.04} />
+            <Vignette offset={0.3} darkness={0.85} />
+          </EffectComposer>
+        ) : (
+          // Na mobile: mniejszy Bloom (wydajność) + Noise + Vignette żeby nie było tak ciemno
+          <EffectComposer>
+            <Bloom luminanceThreshold={0.6} luminanceSmoothing={0.4} mipmapBlur intensity={1.2} radius={0.7} />
+            <Noise opacity={0.06} />
+            <Vignette offset={0.25} darkness={0.7} />
+          </EffectComposer>
+        )}
+      </Canvas>
+    </div>
   );
 }
